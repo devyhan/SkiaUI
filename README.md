@@ -122,6 +122,16 @@ swift run SkiaUIPreview
 cd WebHost && pnpm install && pnpm dev
 ```
 
+## Known Limitations
+
+- Text rendering relies on estimated glyph widths (`fontSize × 0.6 × charCount`), not real font metrics
+- No text wrapping or line breaking — single-line text only
+- No gesture recognizers beyond `onTapGesture`
+- No keyboard input or focus management
+- No image loading or rendering
+- No animation or transition support
+- WebAssembly direct deployment is not yet supported (preview server required)
+
 ## License
 
 MIT
