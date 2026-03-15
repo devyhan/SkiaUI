@@ -155,7 +155,8 @@ let package = Package(
                 "SkiaUILayout",
                 "SkiaUIRenderTree",
                 "SkiaUIDisplayList",
-            ]
+            ],
+            exclude: ["__snapshots__"]
         ),
     ]
 )

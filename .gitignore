@@ -19,3 +19,4 @@ Goldens/output/
 # IDE
 .vscode/
 .idea/
+.claude/

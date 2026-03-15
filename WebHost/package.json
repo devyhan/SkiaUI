@@ -11,7 +11,14 @@
     "canvaskit-wasm": "latest"
   },
   "devDependencies": {
+    "@types/node": "^22",
     "vite": "^6",
+    "vitest": "^3",
     "typescript": "^5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }
