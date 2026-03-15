@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../Resources/SkiaUI.png" alt="SkiaUI Logo" width="400">
+</p>
+
 # SkiaUI
 
 Swift로 작성하는 선언형 UI 엔진. 웹에서 [Skia (CanvasKit)](https://skia.org/docs/user/modules/canvaskit/)로 렌더링합니다.

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="Resources/SkiaUI.png" alt="SkiaUI Logo" width="400">
+</p>
+
 # SkiaUI
 
 A declarative UI engine written in Swift that renders to [Skia (CanvasKit)](https://skia.org/docs/user/modules/canvaskit/) on the web.

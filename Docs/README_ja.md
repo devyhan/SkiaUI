@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../Resources/SkiaUI.png" alt="SkiaUI Logo" width="400">
+</p>
+
 # SkiaUI
 
 Swiftで書く宣言型UIエンジン。Webでは[Skia (CanvasKit)](https://skia.org/docs/user/modules/canvaskit/)でレンダリングします。

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../Resources/SkiaUI.png" alt="SkiaUI Logo" width="400">
+</p>
+
 # SkiaUI
 
 用Swift编写的声明式UI引擎。在Web上通过[Skia (CanvasKit)](https://skia.org/docs/user/modules/canvaskit/)进行渲染。
