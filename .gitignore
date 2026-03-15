@@ -1,0 +1,21 @@
+# Swift
+.build/
+.swiftpm/
+*.xcodeproj/
+xcuserdata/
+DerivedData/
+.DS_Store
+
+# Node.js
+node_modules/
+dist/
+
+# CLI build
+CLI/.build/
+
+# Goldens output
+Goldens/output/
+
+# IDE
+.vscode/
+.idea/
