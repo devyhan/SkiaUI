@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SkiaUI - Declarative UI Engine for Swift</title>
+  <meta name="description" content="A declarative UI engine written in Swift that renders to Skia (CanvasKit) on the web">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  <style>
+    :root {
+      --theme-color: #f5a623;
+      --theme-color-dark: #e6951a;
+    }
+    .sidebar .app-name {
+      font-weight: 700;
+    }
+    .markdown-section code {
+      border-radius: 4px;
+    }
+    .markdown-section pre > code {
+      font-size: 0.85em;
+    }
+    .app-nav {
+      position: fixed;
+      right: 0;
+      z-index: 10;
+    }
+    /* Mermaid diagram styling */
+    .mermaid {
+      display: flex;
+      justify-content: center;
+      margin: 1em 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">Loading...</div>
+  <script>
+    window.$docsify = {
+      name: 'SkiaUI',
+      repo: 'https://github.com/devyhan/SkiaUI',
+      loadSidebar: true,
+      loadNavbar: true,
+      subMaxLevel: 3,
+      auto2top: true,
+      search: {
+        paths: 'auto',
+        placeholder: {
+          '/ko/': '검색',
+          '/ja/': '検索',
+          '/zh/': '搜索',
+          '/': 'Search',
+        },
+        noData: {
+          '/ko/': '결과 없음',
+          '/ja/': '結果なし',
+          '/zh/': '没有结果',
+          '/': 'No results',
+        },
+      },
+      alias: {
+        '/ko/.*/_sidebar.md': '/ko/_sidebar.md',
+        '/ja/.*/_sidebar.md': '/ja/_sidebar.md',
+        '/zh/.*/_sidebar.md': '/zh/_sidebar.md',
+        '/ko/.*/_navbar.md': '/_navbar.md',
+        '/ja/.*/_navbar.md': '/_navbar.md',
+        '/zh/.*/_navbar.md': '/_navbar.md',
+      },
+      markdown: {
+        renderer: {
+          code: function(code, lang) {
+            if (lang === 'mermaid') {
+              return '<div class="mermaid">' + code + '</div>';
+            }
+            return this.origin.code.apply(this, arguments);
+          }
+        }
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-swift.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: false, theme: 'default' });
+    // Re-render mermaid diagrams on route change
+    function renderMermaid() {
+      document.querySelectorAll('.mermaid').forEach(function(el) {
+        if (el.getAttribute('data-processed')) {
+          el.removeAttribute('data-processed');
+          el.innerHTML = el.textContent;
+        }
+      });
+      mermaid.init(undefined, '.mermaid');
+    }
+    window.$docsify.plugins = (window.$docsify.plugins || []).concat(function(hook) {
+      hook.doneEach(function() {
+        renderMermaid();
+      });
+    });
+  </script>
+</body>
+</html>
