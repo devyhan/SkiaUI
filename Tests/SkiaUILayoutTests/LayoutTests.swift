@@ -208,4 +208,25 @@ import SkiaUIElement
         #expect(abs(node.width - expectedWidth) < 0.01)
         #expect(abs(node.height - expectedHeight) < 0.01)
     }
+
+    // MARK: - Phase 3: Layout Cache
+
+    @Test func layoutCacheHit() {
+        let eng = LayoutEngine()
+        let el = Element.text("Cache", .init(fontSize: 14))
+        let proposal = ProposedSize(width: 200, height: 100)
+        let first = eng.layout(el, proposal: proposal)
+        let second = eng.layout(el, proposal: proposal)
+        #expect(first == second)
+    }
+
+    @Test func layoutCacheClearWorks() {
+        let eng = LayoutEngine()
+        let el = Element.text("Cache", .init(fontSize: 14))
+        let proposal = ProposedSize(width: 200, height: 100)
+        let first = eng.layout(el, proposal: proposal)
+        eng.clearCache()
+        let second = eng.layout(el, proposal: proposal)
+        #expect(first == second)
+    }
 }

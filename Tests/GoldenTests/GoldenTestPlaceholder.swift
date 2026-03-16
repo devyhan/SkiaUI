@@ -9,6 +9,7 @@ import SkiaUILayout
 import SkiaUIRenderTree
 import SkiaUIDisplayList
 
+extension AllGoldenTests {
 @Suite(.serialized) struct BasicGoldenTests {
     func makeRunner() -> GoldenTestRunner {
         // Use a temp directory for test goldens
@@ -111,7 +112,7 @@ import SkiaUIDisplayList
         }
 
         // Build display list and check for translate after clipRect
-        let dlBuilder = DisplayListBuilder()
+        var dlBuilder = DisplayListBuilder()
         let dl = dlBuilder.build(from: renderNode)
         let runner = makeRunner()
         let serialized = runner.serialize(dl)
@@ -152,4 +153,5 @@ import SkiaUIDisplayList
         #expect(!serialized.contains("ff=system-ui"))
         #expect(serialized.contains("fs=20.0"))
     }
+}
 }

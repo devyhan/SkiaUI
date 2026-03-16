@@ -3,6 +3,7 @@
 
 import Testing
 @testable import SkiaUIDisplayList
+@testable import SkiaUIRenderTree
 
 @Suite struct DisplayListTests {
     @Test func emptyDisplayList() {
@@ -78,5 +79,63 @@ import Testing
         if case .drawText(_, _, _, _, _, _, _, let family) = decoded!.commands[0] {
             #expect(family == nil)
         }
+    }
+
+    // MARK: - Phase 4: Retained Subtree
+
+    @Test func retainedSubtreeMarkerEmitted() {
+        let node = RenderNode(
+            frame: (10, 20, 100, 50),
+            paintStyle: PaintStyle(fillColor: 0xFF0000FF),
+            subtreeID: 42,
+            subtreeVersion: 1
+        )
+        var builder = DisplayListBuilder()
+        let list = builder.build(from: node)
+        // First build: cache miss, should emit begin/content/end markers
+        let hasBegin = list.commands.contains { cmd in
+            if case .retainedSubtreeBegin(let id, let v) = cmd { return id == 42 && v == 1 }
+            return false
+        }
+        let hasEnd = list.commands.contains { $0 == .retainedSubtreeEnd }
+        #expect(hasBegin)
+        #expect(hasEnd)
+    }
+
+    @Test func retainedCacheHitSkipsCommands() {
+        let node = RenderNode(
+            frame: (10, 20, 100, 50),
+            paintStyle: PaintStyle(fillColor: 0xFF0000FF),
+            subtreeID: 42,
+            subtreeVersion: 1
+        )
+        // First build: populates cache
+        var builder = DisplayListBuilder()
+        let firstList = builder.build(from: node)
+
+        // Second build with same cache: should hit cache and skip inner commands
+        let secondList = builder.build(from: node)
+
+        // Second list should be shorter (only begin + end markers)
+        #expect(secondList.commands.count < firstList.commands.count)
+        #expect(secondList.commands.count == 2) // retainedBegin + retainedEnd
+    }
+
+    @Test func retainedCacheInvalidation() {
+        let node = RenderNode(
+            frame: (10, 20, 100, 50),
+            paintStyle: PaintStyle(fillColor: 0xFF0000FF),
+            subtreeID: 42,
+            subtreeVersion: 1
+        )
+        var builder = DisplayListBuilder()
+        let firstList = builder.build(from: node)
+
+        // Invalidate the cache entry
+        builder.retainedCache.invalidate(id: 42)
+
+        // Third build: should regenerate full commands
+        let thirdList = builder.build(from: node)
+        #expect(thirdList.commands.count == firstList.commands.count)
     }
 }

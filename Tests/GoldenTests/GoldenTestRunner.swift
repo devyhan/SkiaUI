@@ -22,7 +22,7 @@ public struct GoldenTestRunner {
         let layout = engine.layout(element, constraints: constraints)
         let builder = RenderTreeBuilder()
         let renderNode = builder.build(element: element, layout: layout)
-        let dlBuilder = DisplayListBuilder()
+        var dlBuilder = DisplayListBuilder()
         return dlBuilder.build(from: renderNode)
     }
 

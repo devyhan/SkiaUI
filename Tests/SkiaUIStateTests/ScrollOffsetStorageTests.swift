@@ -4,69 +4,75 @@
 import Testing
 @testable import SkiaUIState
 
-@Suite struct ScrollOffsetStorageTests {
+@Suite(.serialized) struct ScrollOffsetStorageTests {
+    // Use high unique IDs per test to avoid cross-target interference
+    // (other targets may call ScrollOffsetStorage.shared.reset() concurrently).
+
     @Test func initialOffsetIsZero() {
         let storage = ScrollOffsetStorage.shared
-        storage.reset()
-        #expect(storage.getOffset(id: 999) == 0)
+        // Unregistered ID always returns 0
+        #expect(storage.getOffset(id: 80001) == 0)
     }
 
     @Test func applyDeltaAccumulates() {
         let storage = ScrollOffsetStorage.shared
-        storage.reset()
-        storage.setContentSize(id: 0, size: 500)
-        storage.setViewportSize(id: 0, size: 200)
-        storage.applyDelta(id: 0, delta: 50)
-        #expect(storage.getOffset(id: 0) == 50)
-        storage.applyDelta(id: 0, delta: 30)
-        #expect(storage.getOffset(id: 0) == 80)
+        let id = 80002
+        storage.setContentSize(id: id, size: 500)
+        storage.setViewportSize(id: id, size: 200)
+        storage.applyDelta(id: id, delta: -999999) // Reset to 0
+        storage.applyDelta(id: id, delta: 50)
+        #expect(storage.getOffset(id: id) == 50)
+        storage.setContentSize(id: id, size: 500)
+        storage.setViewportSize(id: id, size: 200)
+        storage.applyDelta(id: id, delta: 30)
+        #expect(storage.getOffset(id: id) == 80)
     }
 
     @Test func offsetClampedToZero() {
         let storage = ScrollOffsetStorage.shared
-        storage.reset()
-        storage.setContentSize(id: 0, size: 500)
-        storage.setViewportSize(id: 0, size: 200)
+        let id = 80003
+        storage.setContentSize(id: id, size: 500)
+        storage.setViewportSize(id: id, size: 200)
         // Try to scroll past top
-        storage.applyDelta(id: 0, delta: -100)
-        #expect(storage.getOffset(id: 0) == 0)
+        storage.applyDelta(id: id, delta: -100)
+        #expect(storage.getOffset(id: id) == 0)
     }
 
     @Test func offsetClampedToMaxScroll() {
         let storage = ScrollOffsetStorage.shared
-        storage.reset()
-        storage.setContentSize(id: 0, size: 500)
-        storage.setViewportSize(id: 0, size: 200)
+        let id = 80004
+        storage.setContentSize(id: id, size: 500)
+        storage.setViewportSize(id: id, size: 200)
         // maxScroll = 500 - 200 = 300
-        storage.applyDelta(id: 0, delta: 999)
-        #expect(storage.getOffset(id: 0) == 300)
+        storage.applyDelta(id: id, delta: 999)
+        #expect(storage.getOffset(id: id) == 300)
     }
 
     @Test func maxScrollCalculation() {
         let storage = ScrollOffsetStorage.shared
-        storage.reset()
-        storage.setContentSize(id: 0, size: 1000)
-        storage.setViewportSize(id: 0, size: 400)
-        #expect(storage.maxScroll(id: 0) == 600)
+        let id = 80005
+        storage.setContentSize(id: id, size: 1000)
+        storage.setViewportSize(id: id, size: 400)
+        #expect(storage.maxScroll(id: id) == 600)
     }
 
     @Test func maxScrollNeverNegative() {
         let storage = ScrollOffsetStorage.shared
-        storage.reset()
-        storage.setContentSize(id: 0, size: 100)
-        storage.setViewportSize(id: 0, size: 400)
+        let id = 80006
+        storage.setContentSize(id: id, size: 100)
+        storage.setViewportSize(id: id, size: 400)
         // Content smaller than viewport → maxScroll = 0
-        #expect(storage.maxScroll(id: 0) == 0)
+        #expect(storage.maxScroll(id: id) == 0)
     }
 
     @Test func allOffsetsReturnsDictionary() {
         let storage = ScrollOffsetStorage.shared
-        storage.reset()
-        storage.setContentSize(id: 1, size: 500)
-        storage.setViewportSize(id: 1, size: 200)
-        storage.applyDelta(id: 1, delta: 42)
+        let id = 80007
+        storage.setContentSize(id: id, size: 500)
+        storage.setViewportSize(id: id, size: 200)
+        storage.applyDelta(id: id, delta: 42)
         let offsets = storage.allOffsets()
-        #expect(offsets[1] == 42)
+        #expect(offsets[id] == 42)
     }
 
     @Test func resetClearsEverything() {

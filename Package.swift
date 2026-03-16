@@ -145,11 +145,24 @@ let package = Package(
         ),
         .testTarget(
             name: "SkiaUIDisplayListTests",
-            dependencies: ["SkiaUIDisplayList"]
+            dependencies: ["SkiaUIDisplayList", "SkiaUIRenderTree"]
         ),
         .testTarget(
             name: "SkiaUISemanticsTests",
             dependencies: ["SkiaUISemantics", "SkiaUIElement", "SkiaUILayout"]
+        ),
+        .testTarget(
+            name: "SkiaUIRuntimeTests",
+            dependencies: [
+                "SkiaUIRuntime",
+                "SkiaUIDSL",
+                "SkiaUIElement",
+                "SkiaUIState",
+                "SkiaUIDisplayList",
+                "SkiaUIReconciler",
+                "SkiaUIRenderTree",
+                "SkiaUILayout",
+            ]
         ),
         .testTarget(
             name: "GoldenTests",

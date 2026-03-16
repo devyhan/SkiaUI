@@ -5,7 +5,8 @@
 import Testing
 import SkiaUIDSL
 
-@Suite struct TypographyImageTests {
+extension AllGoldenTests {
+@Suite(.serialized) struct TypographyImageTests {
     @Test func plainText() {
         assertImageSnapshot(Text("Hello"), named: "plainText")
     }
@@ -41,4 +42,5 @@ import SkiaUIDSL
             named: "multipleTextsInVStack"
         )
     }
+}
 }

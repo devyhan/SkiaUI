@@ -117,4 +117,15 @@ import Testing
         #expect(a == b)
         #expect(a != c)
     }
+
+    @Test func elementHashable() {
+        let a = Element.text("Hello", .init(fontSize: 14))
+        let b = Element.text("Hello", .init(fontSize: 14))
+        let c = Element.text("World", .init(fontSize: 14))
+        #expect(a.hashValue == b.hashValue)
+        #expect(a.hashValue != c.hashValue)
+        // Set membership works
+        let set: Set<Element> = [a, b, c]
+        #expect(set.count == 2)
+    }
 }
