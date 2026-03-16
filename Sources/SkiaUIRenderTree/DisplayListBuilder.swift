@@ -4,16 +4,33 @@
 import SkiaUIDisplayList
 
 public struct DisplayListBuilder: Sendable {
-    public init() {}
+    public var retainedCache: RetainedSubtreeCache
 
-    public func build(from root: RenderNode) -> DisplayList {
+    public init(retainedCache: RetainedSubtreeCache = RetainedSubtreeCache()) {
+        self.retainedCache = retainedCache
+    }
+
+    public mutating func build(from root: RenderNode) -> DisplayList {
         var list = DisplayList()
         emitNode(root, into: &list)
         return list
     }
 
-    private func emitNode(_ node: RenderNode, into list: inout DisplayList) {
+    private mutating func emitNode(_ node: RenderNode, into list: inout DisplayList) {
         let (x, y, w, h) = node.frame
+
+        // Retained subtree optimization: skip inner commands if cache is valid
+        if let subtreeID = node.subtreeID {
+            let version = node.subtreeVersion
+            if retainedCache.isValid(id: subtreeID, version: version) {
+                // Cache hit — emit markers only, skip inner draw commands
+                list.append(.retainedSubtreeBegin(id: subtreeID, version: version))
+                list.append(.retainedSubtreeEnd)
+                return
+            }
+            // Cache miss — emit full content with markers
+            list.append(.retainedSubtreeBegin(id: subtreeID, version: version))
+        }
 
         list.append(.save)
         if x != 0 || y != 0 {
@@ -48,5 +65,9 @@ public struct DisplayListBuilder: Sendable {
         }
 
         list.append(.restore)
+
+        if node.subtreeID != nil {
+            list.append(.retainedSubtreeEnd)
+        }
     }
 }

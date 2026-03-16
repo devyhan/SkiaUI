@@ -4,6 +4,7 @@
 import SkiaUIDSL
 import SkiaUIState
 import SkiaUIElement
+import SkiaUIReconciler
 import SkiaUILayout
 import SkiaUIRenderTree
 import SkiaUIDisplayList
@@ -13,9 +14,19 @@ public final class RootHost: @unchecked Sendable {
     private var currentElement: Element?
     private var currentLayout: LayoutNode?
     private let layoutEngine = LayoutEngine()
+    private let reconciler = Reconciler()
+    private var previousElement: Element?
+    private var previousDisplayListBytes: [UInt8]?
+    private var previousScrollOffsets: [Int: Float] = [:]
+    private var previousViewportWidth: Float = 0
+    private var previousViewportHeight: Float = 0
+    private var dirtyTracker = DirtyTracker()
+    private var retainedCache = RetainedSubtreeCache()
+    private let renderCache = RenderCache()
     private var viewportWidth: Float = 800
     private var viewportHeight: Float = 600
     private var onDisplayList: (([UInt8]) -> Void)?
+    private let attributeGraph = AttributeGraph()
 
     public init() {}
 
@@ -32,7 +43,69 @@ public final class RootHost: @unchecked Sendable {
         // Reset scroll ID counter so the same tree structure yields the same IDs,
         // allowing scroll offsets to persist across re-renders.
         resetScrollIDCounter()
-        let element = ViewToElementConverter.convert(view)
+        StateStorage.shared.resetSlotCounter()
+
+        // Register dependency recording callbacks
+        let graph = self.attributeGraph
+        var liveNodeIDs = Set<AttributeNodeID>()
+
+        DependencyRecorder.shared.setCallbacks(
+            onRead: { stateID in
+                graph.recordSourceRead(AttributeNodeID(sourcePath: [stateID]))
+            },
+            onWrite: { stateID in
+                graph.markSourceChanged(AttributeNodeID(sourcePath: [stateID]))
+            }
+        )
+
+        // Use interceptor for per-subtree caching
+        let element = ViewToElementConverter.withInterceptor({ path, evaluator in
+            let nodeID = AttributeNodeID(viewPath: path)
+            liveNodeIDs.insert(nodeID)
+            graph.recordComputedRead(nodeID)
+
+            let result = graph.evaluate(nodeID) {
+                AnyHashableSendable(evaluator())
+            }
+            return result.unwrap()!
+        }, convert: view)
+
+        // NOTE: Do NOT clear DependencyRecorder callbacks here.
+        // The onWrite callback must remain active between frames so that
+        // @State mutations (user interactions) call markSourceChanged()
+        // on the AttributeGraph, marking dependent nodes as out-of-date
+        // before the next render cycle.
+        graph.pruneDeadNodes(liveIDs: liveNodeIDs)
+
+        // Phase 1: Reconciler early-return — skip entire pipeline if element tree unchanged
+        let scrollOffsets = ScrollOffsetStorage.shared.allOffsets()
+        let viewportChanged = viewportWidth != previousViewportWidth || viewportHeight != previousViewportHeight
+        if let prev = previousElement {
+            let patches = reconciler.diff(old: prev, new: element)
+            if patches.isEmpty && scrollOffsets == previousScrollOffsets && !viewportChanged,
+               let cachedBytes = previousDisplayListBytes {
+                onDisplayList?(cachedBytes)
+                return
+            }
+
+            // Phase 2: Populate DirtyTracker from patches
+            dirtyTracker.clear()
+            for patch in patches {
+                let path: ElementPath = switch patch {
+                case .insert(let p, _): p
+                case .delete(let p): p
+                case .update(let p, _, _): p
+                case .replace(let p, _, _): p
+                }
+                dirtyTracker.markDirty(path)
+            }
+        }
+
+        // Phase 3: Clear per-frame caches before computing layout.
+        // The retained subtree cache must be cleared when the element tree changed,
+        // because subtreeVersion is always 0 and would falsely cache-hit otherwise.
+        layoutEngine.clearCache()
+        retainedCache.clear()
         var layout = layoutEngine.layout(element, proposal: ProposedSize(width: viewportWidth, height: viewportHeight))
 
         // Center content within viewport (matches SwiftUI root view behavior)
@@ -42,18 +115,23 @@ public final class RootHost: @unchecked Sendable {
         // Sync scroll metrics (content/viewport sizes) for all scroll containers
         syncScrollMetrics(element: element, layout: layout)
 
-        let scrollOffsets = ScrollOffsetStorage.shared.allOffsets()
-        let renderTreeBuilder = RenderTreeBuilder()
+        let renderTreeBuilder = RenderTreeBuilder(renderCache: renderCache)
         let renderNode = renderTreeBuilder.build(element: element, layout: layout, scrollOffsets: scrollOffsets)
 
-        let displayListBuilder = DisplayListBuilder()
+        var displayListBuilder = DisplayListBuilder(retainedCache: retainedCache)
         let displayList = displayListBuilder.build(from: renderNode)
+        retainedCache = displayListBuilder.retainedCache
 
         currentElement = element
         currentLayout = layout
+        previousElement = element
+        previousScrollOffsets = scrollOffsets
+        previousViewportWidth = viewportWidth
+        previousViewportHeight = viewportHeight
 
         let encoder = CommandEncoder()
         let bytes = encoder.encode(displayList)
+        previousDisplayListBytes = bytes
         onDisplayList?(bytes)
     }
 

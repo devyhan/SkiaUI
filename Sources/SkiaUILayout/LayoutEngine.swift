@@ -4,7 +4,13 @@
 import SkiaUIElement
 
 public struct LayoutEngine: Sendable {
+    private let cache = LayoutCache()
+
     public init() {}
+
+    public func clearCache() {
+        cache.clear()
+    }
 
     // Existing public API (backward compatible)
     public func layout(_ element: Element, constraints: Constraints) -> LayoutNode {
@@ -17,6 +23,16 @@ public struct LayoutEngine: Sendable {
     }
 
     private func layoutElement(_ element: Element, proposal: ProposedSize) -> LayoutNode {
+        let cacheKey = LayoutCache.CacheKey(element: element, proposal: proposal)
+        if let cached = cache.get(cacheKey) {
+            return cached
+        }
+        let result = computeLayout(element, proposal: proposal)
+        cache.set(cacheKey, result)
+        return result
+    }
+
+    private func computeLayout(_ element: Element, proposal: ProposedSize) -> LayoutNode {
         switch element {
         case .empty:
             return LayoutNode()
@@ -139,7 +155,8 @@ public struct LayoutEngine: Sendable {
             return layoutElement(element, proposal: p)
 
         case .background, .foregroundColor, .onTap,
-             .accessibilityLabel, .accessibilityRole, .accessibilityHint, .accessibilityHidden:
+             .accessibilityLabel, .accessibilityRole, .accessibilityHint, .accessibilityHidden,
+             .drawingGroup:
             return layoutElement(element, proposal: proposal)
         }
     }
@@ -167,5 +184,30 @@ public struct LayoutEngine: Sendable {
         if let lo = min { result = Swift.max(result, lo) }
         if let hi = max { result = Swift.min(result, hi) }
         return result
+    }
+}
+
+// MARK: - Layout Cache
+
+/// Reference-type cache for layout results, keyed by (Element, ProposedSize).
+/// Uses a class to avoid mutating self issues in LayoutStrategy measure closures.
+final class LayoutCache: @unchecked Sendable {
+    struct CacheKey: Hashable {
+        let element: Element
+        let proposal: ProposedSize
+    }
+
+    private var entries: [CacheKey: LayoutNode] = [:]
+
+    func get(_ key: CacheKey) -> LayoutNode? {
+        entries[key]
+    }
+
+    func set(_ key: CacheKey, _ value: LayoutNode) {
+        entries[key] = value
+    }
+
+    func clear() {
+        entries.removeAll()
     }
 }

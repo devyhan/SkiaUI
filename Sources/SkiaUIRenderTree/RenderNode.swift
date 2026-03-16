@@ -10,6 +10,8 @@ public final class RenderNode: @unchecked Sendable {
     public var children: [RenderNode]
     public var clipToBounds: Bool
     public var scrollOffset: (x: Float, y: Float)?
+    public var subtreeID: Int?
+    public var subtreeVersion: Int
 
     public init(
         frame: (x: Float, y: Float, width: Float, height: Float) = (0, 0, 0, 0),
@@ -17,7 +19,9 @@ public final class RenderNode: @unchecked Sendable {
         textContent: TextContent? = nil,
         children: [RenderNode] = [],
         clipToBounds: Bool = false,
-        scrollOffset: (x: Float, y: Float)? = nil
+        scrollOffset: (x: Float, y: Float)? = nil,
+        subtreeID: Int? = nil,
+        subtreeVersion: Int = 0
     ) {
         self.frame = frame
         self.paintStyle = paintStyle
@@ -25,6 +29,8 @@ public final class RenderNode: @unchecked Sendable {
         self.children = children
         self.clipToBounds = clipToBounds
         self.scrollOffset = scrollOffset
+        self.subtreeID = subtreeID
+        self.subtreeVersion = subtreeVersion
     }
 }
 

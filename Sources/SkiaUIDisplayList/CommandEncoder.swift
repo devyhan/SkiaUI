@@ -93,8 +93,8 @@ public struct CommandEncoder: Sendable {
             }
         case .retainedSubtreeBegin(let id, let version):
             buffer.append(Self.OP_RETAINED_BEGIN)
-            appendInt32(&buffer, Int32(id))
-            appendInt32(&buffer, Int32(version))
+            appendInt32(&buffer, Int32(truncatingIfNeeded: id))
+            appendInt32(&buffer, Int32(truncatingIfNeeded: version))
         case .retainedSubtreeEnd:
             buffer.append(Self.OP_RETAINED_END)
         }
