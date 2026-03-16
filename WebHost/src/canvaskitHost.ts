@@ -1,5 +1,6 @@
 import type { CanvasKit, Surface } from "canvaskit-wasm";
 import { DisplayListPlayer } from "./displayListPlayer";
+import { FontManager } from "./fontManager";
 
 export async function start(CanvasKit: CanvasKit): Promise<void> {
   const canvasElement = document.getElementById(
@@ -28,21 +29,19 @@ export async function start(CanvasKit: CanvasKit): Promise<void> {
     throw new Error("[SkiaUI] Failed to create CanvasKit surface.");
   }
 
-  // Load font
-  const fontData = await fetch("/Roboto-Regular.ttf").then((r) =>
-    r.arrayBuffer()
-  );
-  let typeface = null;
-  try {
-    typeface = CanvasKit.Typeface.MakeFreeTypeFaceFromData(fontData);
-  } catch {}
-  if (!typeface) {
-    try {
-      typeface = CanvasKit.FontMgr.RefDefault().MakeTypefaceFromData(fontData);
-    } catch {}
-  }
+  // Load fonts via FontManager
+  const fontManager = new FontManager(CanvasKit);
+  await fontManager.loadFont("/Roboto-Regular.ttf", "Roboto");
+  await Promise.all([
+    fontManager.loadFont("/MonaspaceNeon-Regular.otf", "Monaspace Neon"),
+    fontManager.loadFont("/MonaspaceNeon-Bold.otf", "Monaspace Neon Bold"),
+    fontManager.loadFont("/MonaspaceArgon-Regular.otf", "Monaspace Argon"),
+    fontManager.loadFont("/MonaspaceXenon-Regular.otf", "Monaspace Xenon"),
+    fontManager.loadFont("/MonaspaceRadon-Regular.otf", "Monaspace Radon"),
+    fontManager.loadFont("/MonaspaceKrypton-Regular.otf", "Monaspace Krypton"),
+  ]);
 
-  const player = new DisplayListPlayer(CanvasKit, typeface);
+  const player = new DisplayListPlayer(CanvasKit, fontManager);
   let currentBuffer: ArrayBuffer | null = null;
 
   // Sync viewport with Swift server and get display list

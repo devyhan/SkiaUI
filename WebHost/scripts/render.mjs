@@ -107,6 +107,11 @@ function play(ck, buffer, canvas, typeface) {
         readInt32(); // fontWeight (unused in rendering)
         const color = readUint32();
         const boundsWidth = readFloat();
+        // Decode fontFamily (4-byte length + UTF-8 bytes, length 0 = nil)
+        const familyLen = readInt32();
+        if (familyLen > 0) {
+          offset += familyLen; // skip fontFamily bytes (not used in offline renderer)
+        }
         setColor(color);
 
         const font = new ck.Font(typeface, fontSize);

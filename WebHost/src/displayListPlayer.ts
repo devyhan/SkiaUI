@@ -1,4 +1,5 @@
-import type { CanvasKit, Canvas, Paint, Typeface } from 'canvaskit-wasm';
+import type { CanvasKit, Canvas, Paint } from 'canvaskit-wasm';
+import type { FontManager } from './fontManager';
 
 const OP_SAVE = 1;
 const OP_RESTORE = 2;
@@ -13,13 +14,13 @@ const OP_RETAINED_END = 9;
 export class DisplayListPlayer {
   private ck: CanvasKit;
   private paint: Paint;
-  private typeface: Typeface | null;
+  private fontManager: FontManager;
 
-  constructor(ck: CanvasKit, typeface?: Typeface | null) {
+  constructor(ck: CanvasKit, fontManager: FontManager) {
     this.ck = ck;
     this.paint = new ck.Paint();
     this.paint.setAntiAlias(true);
-    this.typeface = typeface ?? null;
+    this.fontManager = fontManager;
   }
 
   play(buffer: ArrayBuffer, canvas: Canvas): void {
@@ -92,9 +93,18 @@ export class DisplayListPlayer {
           const _fontWeight = readInt32();
           const color = readUint32();
           const boundsWidth = readFloat();
+          // Decode fontFamily (4-byte length + UTF-8 bytes, length 0 = nil)
+          const familyLen = readInt32();
+          let fontFamily: string | null = null;
+          if (familyLen > 0) {
+            const familyBytes = new Uint8Array(buffer, offset, familyLen);
+            offset += familyLen;
+            fontFamily = new TextDecoder().decode(familyBytes);
+          }
           this.setColor(color);
 
-          const font = new this.ck.Font(this.typeface, fontSize);
+          const typeface = this.fontManager.getTypeface(fontFamily);
+          const font = new this.ck.Font(typeface, fontSize);
           let drawX = x;
           if (boundsWidth > 0) {
             const ids = font.getGlyphIDs(text);
