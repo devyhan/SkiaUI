@@ -140,6 +140,10 @@ let package = Package(
             dependencies: ["SkiaUIReconciler", "SkiaUIElement"]
         ),
         .testTarget(
+            name: "SkiaUIStateTests",
+            dependencies: ["SkiaUIState"]
+        ),
+        .testTarget(
             name: "SkiaUIDisplayListTests",
             dependencies: ["SkiaUIDisplayList"]
         ),
@@ -150,11 +154,13 @@ let package = Package(
         .testTarget(
             name: "GoldenTests",
             dependencies: [
+                "SkiaUI",
                 "SkiaUIDSL",
                 "SkiaUIElement",
                 "SkiaUILayout",
                 "SkiaUIRenderTree",
                 "SkiaUIDisplayList",
+                "SkiaUIState",
             ],
             exclude: ["__snapshots__"]
         ),

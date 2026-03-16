@@ -40,10 +40,16 @@ public indirect enum Element: Equatable, Sendable {
         }
     }
 
+    public enum ScrollAxis: Equatable, Sendable {
+        case vertical
+        case horizontal
+    }
+
     public enum ContainerLayout: Equatable, Sendable {
         case vstack(spacing: Float, alignment: Int) // alignment: 0=leading, 1=center, 2=trailing
         case hstack(spacing: Float, alignment: Int) // alignment: 0=top, 1=center, 2=bottom
         case zstack(alignment: Int)                 // 0=center, etc.
+        case scroll(axis: ScrollAxis, scrollID: Int)
     }
 
     public struct ContainerProperties: Equatable, Sendable {

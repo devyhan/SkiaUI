@@ -60,6 +60,8 @@ public struct LayoutEngine: Sendable {
                 HStackLayout(spacing: spacing, alignment: alignment)
             case .zstack(let alignment):
                 ZStackLayout(alignment: alignment)
+            case .scroll(let axis, _):
+                ScrollViewLayout(axis: axis)
             }
             return strategy.layout(children: children, proposal: proposal) { child, p in
                 layoutElement(child, proposal: p)
