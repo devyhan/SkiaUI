@@ -667,18 +667,18 @@ func resolveFrame(proposal: Float?, min: Float?, ideal: Float?, max: Float?) -> 
 
 ### 6.2 레이아웃에 영향을 주되 구조를 변경하지 않는 Modifier
 
-#### `.font(size, weight)`
+#### `.font(size, weight, family)`
 
 ```
 1. 내부 Element의 텍스트 속성을 변환
-   patched = applyFontToElement(element, size, weight)
-   - .text → fontSize, fontWeight 업데이트
+   patched = applyFontToElement(element, size, weight, family)
+   - .text → fontSize, fontWeight, fontFamily 업데이트
    - .modified(inner, mod) → 내부 재귀 적용
 2. 변환된 요소로 레이아웃
    layoutElement(patched, proposal: proposal)
 ```
 
-래퍼 노드를 생성하지 않으므로 LayoutNode에 자식이 추가되지 않습니다.
+래퍼 노드를 생성하지 않으므로 LayoutNode에 자식이 추가되지 않습니다. `family` 파라미터는 nil이면 기존 fontFamily를 유지합니다.
 
 #### `.fixedSize(horizontal, vertical)`
 

@@ -182,7 +182,7 @@ SkiaUIElement       -> (no deps)
   Element (indirect enum), ElementID, ElementTree
 
 SkiaUIText          -> (no deps)
-  FontDescriptor, FontWeight, TextStyle, ParagraphSpec
+  Font, FontDescriptor, FontWeight, TextStyle, ParagraphSpec
 
 SkiaUIState         -> (no deps)
   @State, Binding, StateStorage, ScrollOffsetStorage, Environment, Scheduler
@@ -252,7 +252,7 @@ public enum Modifier: Equatable, Sendable {
     case frame(width: Float?, height: Float?, alignment: Int)
     case background(ElementColor)
     case foregroundColor(ElementColor)
-    case font(size: Float, weight: Int)
+    case font(size: Float, weight: Int, family: String? = nil)
     case onTap(id: Int)
     case accessibilityLabel(String)
     case accessibilityRole(String)
@@ -292,7 +292,8 @@ public enum DrawCommand: Equatable, Sendable {
     case drawRect(x: Float, y: Float, width: Float, height: Float, color: UInt32)
     case drawRRect(x: Float, y: Float, width: Float, height: Float, radius: Float, color: UInt32)
     case drawText(text: String, x: Float, y: Float, fontSize: Float,
-                  fontWeight: Int, color: UInt32, boundsWidth: Float)
+                  fontWeight: Int, color: UInt32, boundsWidth: Float,
+                  fontFamily: String? = nil)
     case retainedSubtreeBegin(id: Int, version: Int)
     case retainedSubtreeEnd
 }
@@ -393,6 +394,8 @@ Uses `buildPartialBlock` (SE-0348) for unlimited children support. `TupleView2` 
 | `.background(_:)` | `.background(.blue)` |
 | `.foregroundColor(_:)` | `.foregroundColor(.white)` |
 | `.font(size:weight:)` | `.font(size: 24, weight: .bold)` |
+| `.font(_:)` | `.font(.custom("Monaspace Neon", size: 16))` or `.font(.title)` |
+| `.fontFamily(_:)` | `.fontFamily("Courier")` (Text-specific) |
 | `.onTapGesture { }` | `.onTapGesture { count += 1 }` |
 | `.accessibilityLabel(_:)` | `.accessibilityLabel("Close button")` |
 | `.accessibilityRole(_:)` | `.accessibilityRole("button")` |
@@ -414,6 +417,8 @@ Uses `buildPartialBlock` (SE-0348) for unlimited children support. `TupleView2` 
 | `Color(red:green:blue:)` | `Color(red: 0.2, green: 0.6, blue: 0.9)` |
 | `Color(white:)` | `Color(white: 0.75)` |
 | `FontWeight` | `.ultraLight`, `.thin`, `.light`, `.regular`, `.medium`, `.semibold`, `.bold`, `.heavy`, `.black` |
+| `Font` | `.largeTitle`, `.title`, `.headline`, `.body`, `.caption`, `.custom("Name", size:)`, `.system(size:weight:design:)` |
+| `Font.Design` | `.default`, `.monospaced`, `.rounded`, `.serif` |
 | `HorizontalAlignment` | `.leading`, `.center`, `.trailing` |
 | `VerticalAlignment` | `.top`, `.center`, `.bottom` |
 
@@ -439,6 +444,7 @@ WebHost/
     canvaskitHost.ts        Surface creation, frame loop, viewport sync
     canvaskitBackend.ts     Canvas API wrapper
     displayListPlayer.ts    Binary buffer -> CanvasKit API calls
+    fontManager.ts          Custom font loading and typeface management
     eventBridge.ts          Pointer/click event delegation
     debugOverlay.ts         FPS and debug visualization
     semanticsOverlay.ts     Accessibility tree overlay
@@ -464,7 +470,7 @@ SkiaUI/
                                font, onTap, accessibility, modifiedContent)
       Types/                   Color, Alignment, EdgeInsets, Rect
     SkiaUIElement/             Element enum, ElementID, ElementTree
-    SkiaUIText/                FontDescriptor, FontWeight, TextStyle, ParagraphSpec
+    SkiaUIText/                Font, FontDescriptor, FontWeight, TextStyle, ParagraphSpec
     SkiaUIState/               @State, Binding, StateStorage, Environment, Scheduler
     SkiaUIReconciler/          Reconciler, Patch, DirtyTracker
     SkiaUILayout/              LayoutEngine, LayoutNode, Constraints,
@@ -509,7 +515,7 @@ SkiaUI/
 # Build all modules
 swift build
 
-# Run tests (96 tests across 12 suites)
+# Run tests (119 tests across 12 suites)
 swift test
 
 # Start the preview server (serves display list over HTTP on :3001)
@@ -528,7 +534,7 @@ SkiaUI is in early development. The current implementation covers:
 - [x] ResultBuilder DSL with `@ViewBuilder` (SE-0348 `buildPartialBlock`)
 - [x] 4 primitive views (`Text`, `Rectangle`, `Spacer`, `EmptyView`)
 - [x] 4 container views (`VStack`, `HStack`, `ZStack`, `ScrollView`)
-- [x] 12 view modifiers + 2 Rectangle-specific modifiers
+- [x] 14 view modifiers + 2 Rectangle-specific modifiers
 - [x] `@State` reactivity with automatic re-rendering
 - [x] Constraint-based layout engine with pluggable `LayoutStrategy`
 - [x] Tree reconciliation with minimal diffing (`Patch`, `DirtyTracker`)
@@ -536,7 +542,7 @@ SkiaUI is in early development. The current implementation covers:
 - [x] CanvasKit web rendering via TypeScript host
 - [x] Tap/click event handling with z-order-correct hit testing
 - [x] Accessibility semantics tree (`SemanticsNode`, `SemanticsTreeBuilder`)
-- [x] 96 tests across 12 suites
+- [x] 119 tests across 12 suites
 
 ### Roadmap
 

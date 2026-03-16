@@ -78,13 +78,14 @@ Each layer is a separate Swift module. The binary display list is the **only thi
 | -------- | ------- | ------ |
 | **Views** | Text, Rectangle, Spacer, EmptyView | Done |
 | **Containers** | VStack, HStack, ZStack, ScrollView | Done |
-| **Modifiers** | padding, frame, background, foregroundColor, font, onTapGesture | Done |
+| **Modifiers** | padding, frame, background, foregroundColor, font, fontFamily, onTapGesture | Done |
+| **Typography** | Font struct (.custom, .system, semantic styles), fontFamily pipeline, FontManager | Done |
 | **Layout** | ProposedSize negotiation, layoutPriority, fixedSize, flexible frame (min/ideal/max) | Done |
 | **State** | @State, Binding, automatic re-rendering | Done |
 | **Accessibility** | accessibilityLabel, accessibilityRole, accessibilityHint, accessibilityHidden | Done |
 | **Rendering** | Binary display list, CanvasKit replay, retained subtrees | Done |
 | **Reconciler** | Tree diff, Patch, DirtyTracker | Done |
-| **Testing** | 12 test suites, 96 tests | Done |
+| **Testing** | 12 test suites, 119 tests | Done |
 | **Rendering** | List | Planned |
 | **Rendering** | Animation system | Planned |
 | **Rendering** | Image support | Planned |

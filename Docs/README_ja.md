@@ -78,13 +78,14 @@ graph TD
 | -------- | ---- | ---- |
 | **ビュー** | Text, Rectangle, Spacer, EmptyView | 完了 |
 | **コンテナ** | VStack, HStack, ZStack, ScrollView | 完了 |
-| **Modifier** | padding, frame, background, foregroundColor, font, onTapGesture | 完了 |
+| **Modifier** | padding, frame, background, foregroundColor, font, fontFamily, onTapGesture | 完了 |
+| **タイポグラフィ** | Font構造体 (.custom, .system, セマンティックスタイル)、fontFamilyパイプライン、FontManager | 完了 |
 | **レイアウト** | ProposedSizeネゴシエーション、layoutPriority、fixedSize、フレキシブルフレーム (min/ideal/max) | 完了 |
 | **状態** | @State, Binding, 自動再レンダリング | 完了 |
 | **アクセシビリティ** | accessibilityLabel, accessibilityRole, accessibilityHint, accessibilityHidden | 完了 |
 | **レンダリング** | バイナリディスプレイリスト、CanvasKit再生、リテインドサブツリー | 完了 |
 | **Reconciler** | ツリーdiff、Patch、DirtyTracker | 完了 |
-| **テスト** | 12スイート、96テスト | 完了 |
+| **テスト** | 12スイート、119テスト | 完了 |
 | **レンダリング** | List | 予定 |
 | **レンダリング** | アニメーションシステム | 予定 |
 | **レンダリング** | 画像サポート | 予定 |

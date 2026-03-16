@@ -183,7 +183,7 @@ SkiaUIElement       -> (의존성 없음)
   Element (indirect enum), ElementID, ElementTree
 
 SkiaUIText          -> (의존성 없음)
-  FontDescriptor, FontWeight, TextStyle, ParagraphSpec
+  Font, FontDescriptor, FontWeight, TextStyle, ParagraphSpec
 
 SkiaUIState         -> (의존성 없음)
   @State, Binding, StateStorage, ScrollOffsetStorage, Environment, Scheduler
@@ -253,7 +253,7 @@ public enum Modifier: Equatable, Sendable {
     case frame(FrameProperties)             // min/ideal/max 유연 프레임
     case background(ElementColor)
     case foregroundColor(ElementColor)
-    case font(size: Float, weight: Int)
+    case font(size: Float, weight: Int, family: String? = nil)
     case onTap(id: Int)
     case accessibilityLabel(String)
     case accessibilityRole(String)
@@ -306,7 +306,8 @@ public enum DrawCommand: Equatable, Sendable {
     case drawRect(x: Float, y: Float, width: Float, height: Float, color: UInt32)
     case drawRRect(x: Float, y: Float, width: Float, height: Float, radius: Float, color: UInt32)
     case drawText(text: String, x: Float, y: Float, fontSize: Float,
-                  fontWeight: Int, color: UInt32, boundsWidth: Float)
+                  fontWeight: Int, color: UInt32, boundsWidth: Float,
+                  fontFamily: String? = nil)
     case retainedSubtreeBegin(id: Int, version: Int)
     case retainedSubtreeEnd
 }
@@ -410,6 +411,8 @@ public struct ViewBuilder {
 | `.background(_:)` | `.background(.blue)` |
 | `.foregroundColor(_:)` | `.foregroundColor(.white)` |
 | `.font(size:weight:)` | `.font(size: 24, weight: .bold)` |
+| `.font(_:)` | `.font(.custom("Monaspace Neon", size: 16))` 또는 `.font(.title)` |
+| `.fontFamily(_:)` | `.fontFamily("Courier")` (Text 전용) |
 | `.onTapGesture { }` | `.onTapGesture { count += 1 }` |
 | `.accessibilityLabel(_:)` | `.accessibilityLabel("닫기 버튼")` |
 | `.accessibilityRole(_:)` | `.accessibilityRole("button")` |
@@ -431,6 +434,8 @@ public struct ViewBuilder {
 | `Color(red:green:blue:)` | `Color(red: 0.2, green: 0.6, blue: 0.9)` |
 | `Color(white:)` | `Color(white: 0.75)` |
 | `FontWeight` | `.ultraLight`, `.thin`, `.light`, `.regular`, `.medium`, `.semibold`, `.bold`, `.heavy`, `.black` |
+| `Font` | `.largeTitle`, `.title`, `.headline`, `.body`, `.caption`, `.custom("Name", size:)`, `.system(size:weight:design:)` |
+| `Font.Design` | `.default`, `.monospaced`, `.rounded`, `.serif` |
 | `HorizontalAlignment` | `.leading`, `.center`, `.trailing` |
 | `VerticalAlignment` | `.top`, `.center`, `.bottom` |
 
@@ -456,6 +461,7 @@ WebHost/
     canvaskitHost.ts        Surface 생성, 프레임 루프, 뷰포트 동기화
     canvaskitBackend.ts     Canvas API 래퍼
     displayListPlayer.ts    바이너리 버퍼 -> CanvasKit API 호출
+    fontManager.ts          커스텀 폰트 로딩 및 타입페이스 관리
     eventBridge.ts          포인터/클릭 이벤트 위임
     debugOverlay.ts         FPS 및 디버그 시각화
     semanticsOverlay.ts     접근성 트리 오버레이
@@ -481,7 +487,7 @@ SkiaUI/
                                font, onTap, accessibility, modifiedContent)
       Types/                   Color, Alignment, EdgeInsets, Rect
     SkiaUIElement/             Element enum, ElementID, ElementTree
-    SkiaUIText/                FontDescriptor, FontWeight, TextStyle, ParagraphSpec
+    SkiaUIText/                Font, FontDescriptor, FontWeight, TextStyle, ParagraphSpec
     SkiaUIState/               @State, Binding, StateStorage, Environment, Scheduler
     SkiaUIReconciler/          Reconciler, Patch, DirtyTracker
     SkiaUILayout/              LayoutEngine, LayoutNode, ProposedSize, Constraints,
@@ -526,7 +532,7 @@ SkiaUI/
 # 전체 모듈 빌드
 swift build
 
-# 테스트 실행 (12개 스위트, 96개 테스트)
+# 테스트 실행 (12개 스위트, 119개 테스트)
 swift test
 
 # 프리뷰 서버 시작 (HTTP :3001에서 디스플레이 리스트 제공)
@@ -545,7 +551,7 @@ SkiaUI는 초기 개발 단계입니다. 현재 구현 범위:
 - [x] `@ViewBuilder` 기반 ResultBuilder DSL (SE-0348 `buildPartialBlock`)
 - [x] 4개 primitive 뷰 (`Text`, `Rectangle`, `Spacer`, `EmptyView`)
 - [x] 4개 container 뷰 (`VStack`, `HStack`, `ZStack`, `ScrollView`)
-- [x] 12개 view modifier + 2개 Rectangle 전용 modifier
+- [x] 14개 view modifier + 2개 Rectangle 전용 modifier
 - [x] `@State` 반응성 및 자동 재렌더링
 - [x] SwiftUI 호환 ProposedSize 기반 레이아웃 엔진 (우선순위+유연성 공간 분배)
 - [x] `layoutPriority`, `fixedSize`, 유연 프레임(min/ideal/max) 지원
@@ -554,7 +560,7 @@ SkiaUI는 초기 개발 단계입니다. 현재 구현 범위:
 - [x] TypeScript 호스트를 통한 CanvasKit 웹 렌더링
 - [x] Z-order 정확한 히트 테스트 기반 탭/클릭 이벤트 처리
 - [x] 접근성 시맨틱스 트리 (`SemanticsNode`, `SemanticsTreeBuilder`)
-- [x] 12개 스위트, 96개 테스트
+- [x] 12개 스위트, 119개 테스트
 
 ### 로드맵
 

@@ -256,6 +256,8 @@ public protocol LayoutStrategy: Sendable {
 | `.background(_:)` | `.background(.blue)` |
 | `.foregroundColor(_:)` | `.foregroundColor(.white)` |
 | `.font(size:weight:)` | `.font(size: 24, weight: .bold)` |
+| `.font(_:)` | `.font(.custom("Monaspace Neon", size: 16))` |
+| `.fontFamily(_:)` | `.fontFamily("Courier")` (Text专用) |
 | `.onTapGesture { }` | `.onTapGesture { count += 1 }` |
 | `.accessibilityLabel(_:)` | `.accessibilityLabel("关闭按钮")` |
 
@@ -272,6 +274,8 @@ public protocol LayoutStrategy: Sendable {
 | ---- | -- |
 | `Color` | `.red`, `.blue`, `.green`, `.orange`, `.purple`, `.yellow`, `.gray`, `.black`, `.white`, `.clear` |
 | `FontWeight` | `.ultraLight`, `.thin`, `.light`, `.regular`, `.medium`, `.semibold`, `.bold`, `.heavy`, `.black` |
+| `Font` | `.largeTitle`, `.title`, `.headline`, `.body`, `.caption`, `.custom("Name", size:)`, `.system(size:weight:design:)` |
+| `Font.Design` | `.default`, `.monospaced`, `.rounded`, `.serif` |
 
 ## Web Host
 
@@ -303,7 +307,7 @@ SkiaUI处于早期开发阶段。
 - [x] 基于`@ViewBuilder`的ResultBuilder DSL
 - [x] 4个基本视图
 - [x] 4个容器视图（`VStack`、`HStack`、`ZStack`、`ScrollView`）
-- [x] 12个view modifier + 2个Rectangle专用modifier
+- [x] 14个view modifier + 2个Rectangle专用modifier
 - [x] `@State`响应性与自动重新渲染
 - [x] 基于约束的布局引擎
 - [x] 基于最小diff的树协调

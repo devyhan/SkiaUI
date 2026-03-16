@@ -262,6 +262,8 @@ public protocol LayoutStrategy: Sendable {
 | `.background(_:)` | `.background(.blue)` |
 | `.foregroundColor(_:)` | `.foregroundColor(.white)` |
 | `.font(size:weight:)` | `.font(size: 24, weight: .bold)` |
+| `.font(_:)` | `.font(.custom("Monaspace Neon", size: 16))` |
+| `.fontFamily(_:)` | `.fontFamily("Courier")` (Text専用) |
 | `.onTapGesture { }` | `.onTapGesture { count += 1 }` |
 | `.accessibilityLabel(_:)` | `.accessibilityLabel("閉じるボタン")` |
 
@@ -278,6 +280,8 @@ public protocol LayoutStrategy: Sendable {
 | -- | -- |
 | `Color` | `.red`, `.blue`, `.green`, `.orange`, `.purple`, `.yellow`, `.gray`, `.black`, `.white`, `.clear` |
 | `FontWeight` | `.ultraLight`, `.thin`, `.light`, `.regular`, `.medium`, `.semibold`, `.bold`, `.heavy`, `.black` |
+| `Font` | `.largeTitle`, `.title`, `.headline`, `.body`, `.caption`, `.custom("Name", size:)`, `.system(size:weight:design:)` |
+| `Font.Design` | `.default`, `.monospaced`, `.rounded`, `.serif` |
 
 ## Web Host
 
@@ -309,7 +313,7 @@ SkiaUIは初期開発段階です。
 - [x] `@ViewBuilder`ベースのResultBuilder DSL
 - [x] 4つのprimitiveビュー
 - [x] 4つのcontainerビュー（`VStack`、`HStack`、`ZStack`、`ScrollView`）
-- [x] 12個のview modifier + 2個のRectangle専用modifier
+- [x] 14個のview modifier + 2個のRectangle専用modifier
 - [x] `@State`リアクティビティと自動再レンダリング
 - [x] 制約ベースのレイアウトエンジン
 - [x] 最小diff基盤のツリー再調整
