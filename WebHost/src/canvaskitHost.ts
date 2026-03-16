@@ -97,6 +97,36 @@ export async function start(CanvasKit: CanvasKit): Promise<void> {
     if (surface) renderLoop();
   });
 
+  // Scroll (wheel) handler
+  let scrollPending = false;
+  canvasElement.addEventListener(
+    "wheel",
+    async (event: WheelEvent) => {
+      event.preventDefault();
+      if (scrollPending) return;
+      scrollPending = true;
+      try {
+        const res = await fetch("/api/scroll", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            x: event.clientX,
+            y: event.clientY,
+            deltaX: event.deltaX,
+            deltaY: event.deltaY,
+            viewportWidth: window.innerWidth,
+            viewportHeight: window.innerHeight,
+          }),
+        });
+        if (res.ok) {
+          currentBuffer = await res.arrayBuffer();
+        }
+      } catch {}
+      scrollPending = false;
+    },
+    { passive: false }
+  );
+
   // Click handler
   canvasElement.addEventListener("click", async (event: MouseEvent) => {
     const x = event.clientX;

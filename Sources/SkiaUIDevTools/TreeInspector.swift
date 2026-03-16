@@ -30,6 +30,8 @@ public struct TreeInspector: Sendable {
                 layoutDesc = "HStack(spacing: \(s), align: \(a))"
             case .zstack(let a):
                 layoutDesc = "ZStack(align: \(a))"
+            case .scroll(let axis, let scrollID):
+                layoutDesc = "ScrollView(axis: \(axis), id: \(scrollID))"
             }
             lines.append("\(prefix)\(layoutDesc)")
             for child in children {
