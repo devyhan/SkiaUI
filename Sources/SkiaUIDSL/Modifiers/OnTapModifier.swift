@@ -9,6 +9,13 @@ let _tapLock = NSLock()
 
 public nonisolated(unsafe) var tapHandlers: [Int: () -> Void] = [:]
 
+public func resetTapState() {
+    _tapLock.lock()
+    _nextTapID = 0
+    _tapLock.unlock()
+    tapHandlers.removeAll()
+}
+
 extension View {
     public func onTapGesture(perform action: @escaping () -> Void) -> ModifiedView<Self> {
         _tapLock.lock()

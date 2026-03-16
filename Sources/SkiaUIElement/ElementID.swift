@@ -15,4 +15,10 @@ public struct ElementID: Hashable, Sendable {
         _counter += 1
         return ElementID(_counter)
     }
+
+    public static func resetCounter() {
+        _lock.lock()
+        _counter = 0
+        _lock.unlock()
+    }
 }

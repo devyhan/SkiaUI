@@ -14,11 +14,15 @@ public struct State<Value: Sendable>: Sendable where Value: Equatable {
     }
 
     public var wrappedValue: Value {
-        get { StateStorage.shared.get(id: id) ?? initialValue }
+        get {
+            DependencyRecorder.shared.notifyRead(stateID: id)
+            return StateStorage.shared.get(id: id) ?? initialValue
+        }
         nonmutating set {
             let oldValue: Value? = StateStorage.shared.get(id: id)
             if oldValue != newValue {
                 StateStorage.shared.set(id: id, value: newValue)
+                DependencyRecorder.shared.notifyWrite(stateID: id)
                 StateStorage.shared.markDirty()
             }
         }

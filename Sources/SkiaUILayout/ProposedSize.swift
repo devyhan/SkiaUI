@@ -1,7 +1,7 @@
 // ProposedSize.swift – SkiaUILayout module
 // SwiftUI-compatible proposed size type for layout negotiation.
 
-public struct ProposedSize: Equatable, Sendable {
+public struct ProposedSize: Hashable, Sendable {
     public var width: Float?   // nil = "use ideal size"
     public var height: Float?
 

@@ -1,7 +1,7 @@
 // Element.swift – SkiaUIElement module
 // Core element type representing nodes in the UI element tree.
 
-public indirect enum Element: Equatable, Sendable {
+public indirect enum Element: Hashable, Sendable {
     case empty
     case text(String, TextProperties)
     case rectangle(RectangleProperties)
@@ -9,7 +9,7 @@ public indirect enum Element: Equatable, Sendable {
     case container(ContainerProperties, children: [Element])
     case modified(Element, Modifier)
 
-    public struct TextProperties: Equatable, Sendable {
+    public struct TextProperties: Hashable, Sendable {
         public var fontSize: Float
         public var fontWeight: Int
         public var foregroundColor: ElementColor?
@@ -19,7 +19,7 @@ public indirect enum Element: Equatable, Sendable {
         }
     }
 
-    public struct RectangleProperties: Equatable, Sendable {
+    public struct RectangleProperties: Hashable, Sendable {
         public var fillColor: ElementColor
         public var cornerRadius: Float
         public init(fillColor: ElementColor = .init(r: 0, g: 0, b: 0), cornerRadius: Float = 0) {
@@ -41,24 +41,24 @@ public indirect enum Element: Equatable, Sendable {
         }
     }
 
-    public enum ScrollAxis: Equatable, Sendable {
+    public enum ScrollAxis: Hashable, Sendable {
         case vertical
         case horizontal
     }
 
-    public enum ContainerLayout: Equatable, Sendable {
+    public enum ContainerLayout: Hashable, Sendable {
         case vstack(spacing: Float, alignment: Int) // alignment: 0=leading, 1=center, 2=trailing
         case hstack(spacing: Float, alignment: Int) // alignment: 0=top, 1=center, 2=bottom
         case zstack(alignment: Int)                 // 0=center, etc.
         case scroll(axis: ScrollAxis, scrollID: Int)
     }
 
-    public struct ContainerProperties: Equatable, Sendable {
+    public struct ContainerProperties: Hashable, Sendable {
         public var layout: ContainerLayout
         public init(layout: ContainerLayout) { self.layout = layout }
     }
 
-    public struct FrameProperties: Equatable, Sendable {
+    public struct FrameProperties: Hashable, Sendable {
         public var minWidth: Float?
         public var idealWidth: Float?
         public var maxWidth: Float?
@@ -88,7 +88,7 @@ public indirect enum Element: Equatable, Sendable {
         }
     }
 
-    public enum Modifier: Equatable, Sendable {
+    public enum Modifier: Hashable, Sendable {
         case padding(top: Float, leading: Float, bottom: Float, trailing: Float)
         case frame(FrameProperties)
         case background(ElementColor)
@@ -101,5 +101,6 @@ public indirect enum Element: Equatable, Sendable {
         case accessibilityHidden(Bool)
         case layoutPriority(Double)
         case fixedSize(horizontal: Bool, vertical: Bool)
+        case drawingGroup
     }
 }

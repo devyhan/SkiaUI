@@ -12,15 +12,25 @@ public final class StateStorage: @unchecked Sendable {
     private var isDirty = false
     private var onDirty: (@Sendable () -> Void)?
 
-    private init() {}
+    /// Creates a new storage. Use `.shared` for production.
+    /// Visible for `@testable import` unit tests.
+    internal init() {}
 
     public func allocate<T>(initialValue: T) -> Int {
         lock.lock()
         defer { lock.unlock() }
         let id = nextID
         nextID += 1
-        values[id] = initialValue
+        if values[id] == nil {
+            values[id] = initialValue
+        }
         return id
+    }
+
+    public func resetSlotCounter() {
+        lock.lock()
+        defer { lock.unlock() }
+        nextID = 0
     }
 
     public func get<T>(id: Int) -> T? {
