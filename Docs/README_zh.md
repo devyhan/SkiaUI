@@ -78,14 +78,14 @@ graph TD
 | ---- | ---- | ---- |
 | **视图** | Text, Rectangle, Spacer, EmptyView | 完成 |
 | **容器** | VStack, HStack, ZStack, ScrollView | 完成 |
-| **Modifier** | padding, frame, background, foregroundColor, font, fontFamily, onTapGesture | 完成 |
+| **Modifier** | padding, frame, background, foregroundColor, font, fontFamily, onTapGesture, drawingGroup | 完成 |
 | **排版** | Font结构体 (.custom, .system, 语义样式)、fontFamily管线、FontManager | 完成 |
 | **布局** | ProposedSize协商、layoutPriority、fixedSize、弹性框架 (min/ideal/max) | 完成 |
-| **状态** | @State, Binding, 自动重新渲染 | 完成 |
+| **状态** | @State, Binding, 自动重新渲染, 增量评估 (AttributeGraph) | 完成 |
 | **无障碍** | accessibilityLabel, accessibilityRole, accessibilityHint, accessibilityHidden | 完成 |
-| **渲染** | 二进制显示列表、CanvasKit回放、保留子树 | 完成 |
-| **Reconciler** | 树diff、Patch、DirtyTracker | 完成 |
-| **测试** | 12个套件、119个测试 | 完成 |
+| **渲染** | 二进制显示列表、CanvasKit回放、保留子树、管线优化 | 完成 |
+| **Reconciler** | 树diff、Patch、DirtyTracker、RootHost集成 | 完成 |
+| **测试** | 21个套件、161个测试 | 完成 |
 | **渲染** | List | 计划中 |
 | **渲染** | 动画系统 | 计划中 |
 | **渲染** | 图片支持 | 计划中 |
@@ -139,7 +139,9 @@ cd WebHost && pnpm install && pnpm dev
 
 ## 许可证
 
-MIT
+MIT — 详细信息请参阅 [LICENSE](../LICENSE)。
+
+第三方许可证列于 [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES)。
 
 ## 免责声明
 

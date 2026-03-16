@@ -174,7 +174,8 @@ SkiaUIDSL           -> [SkiaUIElement, SkiaUIText]
   Primitives:   Text, Rectangle, Spacer, EmptyView
   Containers:   VStack, HStack, ZStack, ScrollView
   Modifiers:    padding, frame, background, foregroundColor, font,
-                onTapGesture, accessibilityLabel/Role/Hint/Hidden
+                onTapGesture, layoutPriority, fixedSize, drawingGroup,
+                accessibilityLabel/Role/Hint/Hidden
   Types:        Color, Alignment, EdgeInsets, Rect, Axis
   AnyView, ConditionalView, TupleView2, ViewToElementConverter
 
@@ -186,6 +187,7 @@ SkiaUIText          -> (no deps)
 
 SkiaUIState         -> (no deps)
   @State, Binding, StateStorage, ScrollOffsetStorage, Environment, Scheduler
+  AttributeGraph, AttributeNodeID, DependencyRecorder, AnyHashableSendable
 
 SkiaUIReconciler    -> [SkiaUIElement]
   Reconciler, Patch, ElementPath, DirtyTracker
@@ -232,7 +234,7 @@ No external dependencies for the core modules. `JavaScriptKit` is only needed by
 ### Element as an indirect enum
 
 ```swift
-public indirect enum Element: Equatable, Sendable {
+public indirect enum Element: Hashable, Sendable {
     case empty
     case text(String, TextProperties)
     case rectangle(RectangleProperties)
@@ -247,7 +249,7 @@ The entire UI tree is a single, value-type, `Equatable` structure. This makes di
 `Element.Modifier` encodes every modifier as a flat enum case:
 
 ```swift
-public enum Modifier: Equatable, Sendable {
+public enum Modifier: Hashable, Sendable {
     case padding(top: Float, leading: Float, bottom: Float, trailing: Float)
     case frame(width: Float?, height: Float?, alignment: Int)
     case background(ElementColor)
@@ -258,6 +260,9 @@ public enum Modifier: Equatable, Sendable {
     case accessibilityRole(String)
     case accessibilityHint(String)
     case accessibilityHidden(Bool)
+    case layoutPriority(Double)
+    case fixedSize(horizontal: Bool, vertical: Bool)
+    case drawingGroup
 }
 ```
 
@@ -347,7 +352,7 @@ public struct State<Value: Sendable>: Sendable where Value: Equatable {
 }
 ```
 
-`@State` is backed by a global `StateStorage` (thread-safe, `NSLock`-protected). On mutation, it compares old vs new values; only actual changes trigger `markDirty()`, which fires the `onDirty` callback to re-render. `RootHost` connects this callback to trigger a full render pass.
+`@State` is backed by a global `StateStorage` (thread-safe, `NSLock`-protected). On mutation, it compares old vs new values; only actual changes trigger `markDirty()`, which fires the `onDirty` callback to re-render. `RootHost` connects this callback to trigger a render pass. An `AttributeGraph` (Eval/vite algorithm) tracks `@State` dependencies per composite View, caching Element subtrees and skipping body re-evaluation when inputs are unchanged.
 
 ### ViewBuilder (SE-0348)
 
@@ -401,6 +406,7 @@ Uses `buildPartialBlock` (SE-0348) for unlimited children support. `TupleView2` 
 | `.accessibilityRole(_:)` | `.accessibilityRole("button")` |
 | `.accessibilityHint(_:)` | `.accessibilityHint("Double tap to close")` |
 | `.accessibilityHidden(_:)` | `.accessibilityHidden(true)` |
+| `.drawingGroup()` | `.drawingGroup()` |
 
 ### Rectangle-specific modifiers
 
@@ -466,12 +472,13 @@ SkiaUI/
       PrimitiveView.swift      PrimitiveView protocol
       Primitives/              Text, Rectangle, Spacer, EmptyView
       Containers/              VStack, HStack, ZStack, ScrollView
-      Modifiers/               8 files (padding, frame, background, foreground,
-                               font, onTap, accessibility, modifiedContent)
+      Modifiers/               12 files (padding, frame, background, foreground,
+                               font, onTap, accessibility, layoutPriority, fixedSize, drawingGroup, modifiedContent, viewModifier)
       Types/                   Color, Alignment, EdgeInsets, Rect
     SkiaUIElement/             Element enum, ElementID, ElementTree
     SkiaUIText/                Font, FontDescriptor, FontWeight, TextStyle, ParagraphSpec
-    SkiaUIState/               @State, Binding, StateStorage, Environment, Scheduler
+    SkiaUIState/               @State, Binding, StateStorage, Environment, Scheduler,
+                               AttributeGraph, DependencyRecorder
     SkiaUIReconciler/          Reconciler, Patch, DirtyTracker
     SkiaUILayout/              LayoutEngine, LayoutNode, Constraints,
                                LayoutStrategy, VStack/HStack/ZStackLayout
@@ -497,6 +504,7 @@ SkiaUI/
     SkiaUIDisplayListTests/    Encoding round-trip tests
     SkiaUISemanticsTests/      Accessibility tree tests
     SkiaUIStateTests/          State management tests
+    SkiaUIRuntimeTests/        Runtime optimization tests
     GoldenTests/               Visual regression test framework
   CLI/                         skui dev CLI (build, dev, test, lint)
 ```
@@ -515,7 +523,7 @@ SkiaUI/
 # Build all modules
 swift build
 
-# Run tests (119 tests across 12 suites)
+# Run tests (161 tests across 21 suites)
 swift test
 
 # Start the preview server (serves display list over HTTP on :3001)
@@ -534,7 +542,7 @@ SkiaUI is in early development. The current implementation covers:
 - [x] ResultBuilder DSL with `@ViewBuilder` (SE-0348 `buildPartialBlock`)
 - [x] 4 primitive views (`Text`, `Rectangle`, `Spacer`, `EmptyView`)
 - [x] 4 container views (`VStack`, `HStack`, `ZStack`, `ScrollView`)
-- [x] 14 view modifiers + 2 Rectangle-specific modifiers
+- [x] 15 view modifiers + 2 Rectangle-specific modifiers
 - [x] `@State` reactivity with automatic re-rendering
 - [x] Constraint-based layout engine with pluggable `LayoutStrategy`
 - [x] Tree reconciliation with minimal diffing (`Patch`, `DirtyTracker`)
@@ -542,7 +550,7 @@ SkiaUI is in early development. The current implementation covers:
 - [x] CanvasKit web rendering via TypeScript host
 - [x] Tap/click event handling with z-order-correct hit testing
 - [x] Accessibility semantics tree (`SemanticsNode`, `SemanticsTreeBuilder`)
-- [x] 119 tests across 12 suites
+- [x] 161 tests across 21 suites
 
 ### Roadmap
 
@@ -556,4 +564,6 @@ SkiaUI is in early development. The current implementation covers:
 
 ## License
 
-MIT
+MIT — see [LICENSE](https://github.com/devyhan/SkiaUI/blob/main/LICENSE) for details.
+
+Third-party licenses are listed in [THIRD_PARTY_NOTICES](https://github.com/devyhan/SkiaUI/blob/main/THIRD_PARTY_NOTICES).

@@ -187,6 +187,7 @@ SkiaUIText          -> (의존성 없음)
 
 SkiaUIState         -> (의존성 없음)
   @State, Binding, StateStorage, ScrollOffsetStorage, Environment, Scheduler
+  AttributeGraph, AttributeNodeID, DependencyRecorder, AnyHashableSendable
 
 SkiaUIReconciler    -> [SkiaUIElement]
   Reconciler, Patch, ElementPath, DirtyTracker
@@ -233,7 +234,7 @@ SkiaUIPreview       -> [SkiaUI]  (실행 가능 타깃)
 ### Element: indirect enum으로 설계
 
 ```swift
-public indirect enum Element: Equatable, Sendable {
+public indirect enum Element: Hashable, Sendable {
     case empty
     case text(String, TextProperties)
     case rectangle(RectangleProperties)
@@ -248,7 +249,7 @@ public indirect enum Element: Equatable, Sendable {
 `Element.Modifier`는 모든 modifier를 플랫한 enum case로 인코딩합니다:
 
 ```swift
-public enum Modifier: Equatable, Sendable {
+public enum Modifier: Hashable, Sendable {
     case padding(top: Float, leading: Float, bottom: Float, trailing: Float)
     case frame(FrameProperties)             // min/ideal/max 유연 프레임
     case background(ElementColor)
@@ -261,6 +262,7 @@ public enum Modifier: Equatable, Sendable {
     case accessibilityHidden(Bool)
     case layoutPriority(Double)             // 스택 공간 분배 우선순위
     case fixedSize(horizontal: Bool, vertical: Bool)  // 제안 무시, 고유 크기 사용
+    case drawingGroup
 }
 ```
 
@@ -361,7 +363,7 @@ public struct State<Value: Sendable>: Sendable where Value: Equatable {
 }
 ```
 
-`@State`는 전역 `StateStorage`(`NSLock` 기반 스레드 안전)가 뒷받침합니다. 변경 시 이전 값과 비교하여 실제 변경만 `markDirty()`를 트리거하고, `onDirty` 콜백으로 재렌더링을 실행합니다. `RootHost`가 이 콜백을 연결하여 전체 렌더 패스를 실행합니다.
+`@State`는 전역 `StateStorage`(`NSLock` 기반 스레드 안전)가 뒷받침합니다. 변경 시 이전 값과 비교하여 실제 변경만 `markDirty()`를 트리거하고, `onDirty` 콜백으로 재렌더링을 실행합니다. `RootHost`가 이 콜백을 연결하여 렌더 패스를 실행합니다. `AttributeGraph`(Eval/vite 알고리즘)가 composite View별 `@State` 의존성을 추적하여 Element 서브트리를 캐싱하고, 입력이 변경되지 않은 View의 body 재실행을 생략합니다.
 
 ### ViewBuilder (SE-0348)
 
@@ -418,6 +420,7 @@ public struct ViewBuilder {
 | `.accessibilityRole(_:)` | `.accessibilityRole("button")` |
 | `.accessibilityHint(_:)` | `.accessibilityHint("두 번 탭하여 닫기")` |
 | `.accessibilityHidden(_:)` | `.accessibilityHidden(true)` |
+| `.drawingGroup()` | `.drawingGroup()` |
 
 ### Rectangle 전용 modifier
 
@@ -483,12 +486,14 @@ SkiaUI/
       PrimitiveView.swift      PrimitiveView 프로토콜
       Primitives/              Text, Rectangle, Spacer, EmptyView
       Containers/              VStack, HStack, ZStack, ScrollView
-      Modifiers/               8개 파일 (padding, frame, background, foreground,
-                               font, onTap, accessibility, modifiedContent)
+      Modifiers/               12개 파일 (padding, frame, background, foreground,
+                               font, onTap, accessibility, layoutPriority,
+                               fixedSize, drawingGroup, modifiedContent, viewModifier)
       Types/                   Color, Alignment, EdgeInsets, Rect
     SkiaUIElement/             Element enum, ElementID, ElementTree
     SkiaUIText/                Font, FontDescriptor, FontWeight, TextStyle, ParagraphSpec
-    SkiaUIState/               @State, Binding, StateStorage, Environment, Scheduler
+    SkiaUIState/               @State, Binding, StateStorage, Environment, Scheduler,
+                               AttributeGraph, DependencyRecorder
     SkiaUIReconciler/          Reconciler, Patch, DirtyTracker
     SkiaUILayout/              LayoutEngine, LayoutNode, ProposedSize, Constraints,
                                LayoutStrategy, VStack/HStack/ZStackLayout
@@ -514,6 +519,7 @@ SkiaUI/
     SkiaUIDisplayListTests/    인코딩 라운드트립 테스트
     SkiaUISemanticsTests/      접근성 트리 테스트
     SkiaUIStateTests/          상태 관리 테스트
+    SkiaUIRuntimeTests/        런타임 최적화 테스트
     GoldenTests/               비주얼 회귀 테스트 프레임워크
   CLI/                         skui 개발 CLI (build, dev, test, lint)
 ```
@@ -532,7 +538,7 @@ SkiaUI/
 # 전체 모듈 빌드
 swift build
 
-# 테스트 실행 (12개 스위트, 119개 테스트)
+# 테스트 실행 (21개 스위트, 161개 테스트)
 swift test
 
 # 프리뷰 서버 시작 (HTTP :3001에서 디스플레이 리스트 제공)
@@ -551,7 +557,7 @@ SkiaUI는 초기 개발 단계입니다. 현재 구현 범위:
 - [x] `@ViewBuilder` 기반 ResultBuilder DSL (SE-0348 `buildPartialBlock`)
 - [x] 4개 primitive 뷰 (`Text`, `Rectangle`, `Spacer`, `EmptyView`)
 - [x] 4개 container 뷰 (`VStack`, `HStack`, `ZStack`, `ScrollView`)
-- [x] 14개 view modifier + 2개 Rectangle 전용 modifier
+- [x] 15개 view modifier + 2개 Rectangle 전용 modifier
 - [x] `@State` 반응성 및 자동 재렌더링
 - [x] SwiftUI 호환 ProposedSize 기반 레이아웃 엔진 (우선순위+유연성 공간 분배)
 - [x] `layoutPriority`, `fixedSize`, 유연 프레임(min/ideal/max) 지원
@@ -560,7 +566,7 @@ SkiaUI는 초기 개발 단계입니다. 현재 구현 범위:
 - [x] TypeScript 호스트를 통한 CanvasKit 웹 렌더링
 - [x] Z-order 정확한 히트 테스트 기반 탭/클릭 이벤트 처리
 - [x] 접근성 시맨틱스 트리 (`SemanticsNode`, `SemanticsTreeBuilder`)
-- [x] 12개 스위트, 119개 테스트
+- [x] 21개 스위트, 161개 테스트
 
 ### 로드맵
 
@@ -574,4 +580,6 @@ SkiaUI는 초기 개발 단계입니다. 현재 구현 범위:
 
 ## 라이선스
 
-MIT
+MIT — 자세한 내용은 [LICENSE](https://github.com/devyhan/SkiaUI/blob/main/LICENSE)를 참조하세요.
+
+서드파티 라이선스는 [THIRD_PARTY_NOTICES](https://github.com/devyhan/SkiaUI/blob/main/THIRD_PARTY_NOTICES)에 명시되어 있습니다.

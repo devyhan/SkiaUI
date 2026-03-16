@@ -78,14 +78,14 @@ graph TD
 | -------- | ---- | ---- |
 | **뷰** | Text, Rectangle, Spacer, EmptyView | 완료 |
 | **컨테이너** | VStack, HStack, ZStack, ScrollView | 완료 |
-| **Modifier** | padding, frame, background, foregroundColor, font, fontFamily, onTapGesture | 완료 |
+| **Modifier** | padding, frame, background, foregroundColor, font, fontFamily, onTapGesture, drawingGroup | 완료 |
 | **타이포그래피** | Font 구조체 (.custom, .system, 시맨틱 스타일), fontFamily 파이프라인, FontManager | 완료 |
 | **레이아웃** | ProposedSize 협상, layoutPriority, fixedSize, 유연 프레임 (min/ideal/max) | 완료 |
-| **상태** | @State, Binding, 자동 재렌더링 | 완료 |
+| **상태** | @State, Binding, 자동 재렌더링, 증분 평가 (AttributeGraph) | 완료 |
 | **접근성** | accessibilityLabel, accessibilityRole, accessibilityHint, accessibilityHidden | 완료 |
-| **렌더링** | 바이너리 디스플레이 리스트, CanvasKit 재생, 리테인드 서브트리 | 완료 |
-| **Reconciler** | 트리 diff, Patch, DirtyTracker | 완료 |
-| **테스트** | 12개 스위트, 119개 테스트 | 완료 |
+| **렌더링** | 바이너리 디스플레이 리스트, CanvasKit 재생, 리테인드 서브트리, 파이프라인 최적화 | 완료 |
+| **Reconciler** | 트리 diff, Patch, DirtyTracker, RootHost 연동 | 완료 |
+| **테스트** | 21개 스위트, 161개 테스트 | 완료 |
 | **렌더링** | List | 예정 |
 | **렌더링** | 애니메이션 시스템 | 예정 |
 | **렌더링** | 이미지 지원 | 예정 |
@@ -139,7 +139,9 @@ cd WebHost && pnpm install && pnpm dev
 
 ## 라이선스
 
-MIT
+MIT — 자세한 내용은 [LICENSE](../LICENSE)를 참조하세요.
+
+서드파티 라이선스는 [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES)에 명시되어 있습니다.
 
 ## 면책 조항
 

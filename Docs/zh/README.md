@@ -174,7 +174,8 @@ SkiaUIDSL           -> [SkiaUIElement, SkiaUIText]
   Primitives:   Text, Rectangle, Spacer, EmptyView
   Containers:   VStack, HStack, ZStack, ScrollView
   Modifiers:    padding, frame, background, foregroundColor, font,
-                onTapGesture, accessibilityLabel/Role/Hint/Hidden
+                onTapGesture, accessibilityLabel/Role/Hint/Hidden,
+                layoutPriority, fixedSize, drawingGroup
 ```
 
 核心模块无外部依赖。`JavaScriptKit`仅在WebAssembly构建时由`SkiaUIWebBridge`使用。
@@ -184,7 +185,7 @@ SkiaUIDSL           -> [SkiaUIElement, SkiaUIText]
 ### Element：设计为indirect enum
 
 ```swift
-public indirect enum Element: Equatable, Sendable {
+public indirect enum Element: Hashable, Sendable {
     case empty
     case text(String, TextProperties)
     case rectangle(RectangleProperties)
@@ -221,7 +222,7 @@ public protocol LayoutStrategy: Sendable {
 
 ### 响应式状态
 
-`@State`由全局`StateStorage`（基于`NSLock`的线程安全）支撑。
+`@State`由全局`StateStorage`（基于`NSLock`的线程安全）支撑。`AttributeGraph`（Eval/vite算法）跟踪每个composite View的`@State`依赖，缓存Element子树，在输入未变时跳过View的body重新执行。
 
 ### ViewBuilder (SE-0348)
 
@@ -260,6 +261,7 @@ public protocol LayoutStrategy: Sendable {
 | `.fontFamily(_:)` | `.fontFamily("Courier")` (Text专用) |
 | `.onTapGesture { }` | `.onTapGesture { count += 1 }` |
 | `.accessibilityLabel(_:)` | `.accessibilityLabel("关闭按钮")` |
+| `.drawingGroup()` | `.drawingGroup()` |
 
 ### Rectangle专用modifier
 
@@ -307,7 +309,7 @@ SkiaUI处于早期开发阶段。
 - [x] 基于`@ViewBuilder`的ResultBuilder DSL
 - [x] 4个基本视图
 - [x] 4个容器视图（`VStack`、`HStack`、`ZStack`、`ScrollView`）
-- [x] 14个view modifier + 2个Rectangle专用modifier
+- [x] 15个view modifier + 2个Rectangle专用modifier
 - [x] `@State`响应性与自动重新渲染
 - [x] 基于约束的布局引擎
 - [x] 基于最小diff的树协调
@@ -328,4 +330,6 @@ SkiaUI处于早期开发阶段。
 
 ## 许可证
 
-MIT
+MIT — 详细信息请参阅 [LICENSE](https://github.com/devyhan/SkiaUI/blob/main/LICENSE)。
+
+第三方许可证列于 [THIRD_PARTY_NOTICES](https://github.com/devyhan/SkiaUI/blob/main/THIRD_PARTY_NOTICES)。

@@ -36,7 +36,7 @@ SkiaUI의 레이아웃 시스템은 SwiftUI의 레이아웃 협상 모델을 기
 | **전략 패턴** | VStack, HStack, ZStack 각각이 `LayoutStrategy` 프로토콜을 구현하여 독립적 알고리즘 제공 |
 | **우선순위 기반 분배** | 스택 내 자식들의 `layoutPriority`와 유연성(flexibility)에 따라 공간을 순서대로 분배 |
 | **nil 의미론** | `ProposedSize`에서 nil은 "이상적 크기를 사용하라"는 의미 (SwiftUI의 unspecified와 동일) |
-| **순수 값 타입** | 모든 레이아웃 구조체는 `Equatable`, `Sendable` |
+| **순수 값 타입** | 모든 레이아웃 구조체는 `Hashable`, `Sendable` |
 
 ### 레이아웃 파이프라인 흐름
 
@@ -69,7 +69,7 @@ graph LR
 SwiftUI의 `_ProposedSize`에 대응하는 타입입니다. 부모가 자식에게 "이만큼의 공간이 있다"고 제안할 때 사용합니다.
 
 ```swift
-public struct ProposedSize: Equatable, Sendable {
+public struct ProposedSize: Hashable, Sendable {
     public var width: Float?   // nil = "이상적 크기 사용"
     public var height: Float?
 }

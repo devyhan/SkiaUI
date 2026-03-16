@@ -174,7 +174,8 @@ SkiaUIDSL           -> [SkiaUIElement, SkiaUIText]
   Primitives:   Text, Rectangle, Spacer, EmptyView
   Containers:   VStack, HStack, ZStack, ScrollView
   Modifiers:    padding, frame, background, foregroundColor, font,
-                onTapGesture, accessibilityLabel/Role/Hint/Hidden
+                onTapGesture, layoutPriority, fixedSize, drawingGroup,
+                accessibilityLabel/Role/Hint/Hidden
   Types:        Color, Alignment, EdgeInsets, Rect
   AnyView, ConditionalView, TupleView2, ViewToElementConverter
 ```
@@ -186,7 +187,7 @@ SkiaUIDSL           -> [SkiaUIElement, SkiaUIText]
 ### Element: indirect enumとして設計
 
 ```swift
-public indirect enum Element: Equatable, Sendable {
+public indirect enum Element: Hashable, Sendable {
     case empty
     case text(String, TextProperties)
     case rectangle(RectangleProperties)
@@ -227,7 +228,7 @@ public protocol LayoutStrategy: Sendable {
 
 ### リアクティブ状態
 
-`@State`はグローバル`StateStorage`（`NSLock`ベースのスレッドセーフ）に支えられています。変更時に前の値と比較し、実際の変更のみ`markDirty()`をトリガーします。
+`@State`はグローバル`StateStorage`（`NSLock`ベースのスレッドセーフ）に支えられています。変更時に前の値と比較し、実際の変更のみ`markDirty()`をトリガーします。`AttributeGraph`（Eval/viteアルゴリズム）がcomposite Viewごとの`@State`依存を追跡し、Elementサブツリーをキャッシュして、入力が変わらないViewのbody再実行をスキップします。
 
 ### ViewBuilder (SE-0348)
 
@@ -266,6 +267,7 @@ public protocol LayoutStrategy: Sendable {
 | `.fontFamily(_:)` | `.fontFamily("Courier")` (Text専用) |
 | `.onTapGesture { }` | `.onTapGesture { count += 1 }` |
 | `.accessibilityLabel(_:)` | `.accessibilityLabel("閉じるボタン")` |
+| `.drawingGroup()` | `.drawingGroup()` |
 
 ### Rectangle専用modifier
 
@@ -313,7 +315,7 @@ SkiaUIは初期開発段階です。
 - [x] `@ViewBuilder`ベースのResultBuilder DSL
 - [x] 4つのprimitiveビュー
 - [x] 4つのcontainerビュー（`VStack`、`HStack`、`ZStack`、`ScrollView`）
-- [x] 14個のview modifier + 2個のRectangle専用modifier
+- [x] 15個のview modifier + 2個のRectangle専用modifier
 - [x] `@State`リアクティビティと自動再レンダリング
 - [x] 制約ベースのレイアウトエンジン
 - [x] 最小diff基盤のツリー再調整
@@ -334,4 +336,6 @@ SkiaUIは初期開発段階です。
 
 ## ライセンス
 
-MIT
+MIT — 詳細は [LICENSE](https://github.com/devyhan/SkiaUI/blob/main/LICENSE) をご覧ください。
+
+サードパーティライセンスは [THIRD_PARTY_NOTICES](https://github.com/devyhan/SkiaUI/blob/main/THIRD_PARTY_NOTICES) に記載されています。

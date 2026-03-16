@@ -14,6 +14,8 @@ Write SwiftUI-style code, render pixel-perfect UI on an HTML `<canvas>`.
 > SkiaUI is currently in an **experimental stage**. APIs are unstable and may change without notice. Not recommended for production use.
 
 ```swift
+import SkiaUI
+
 struct CounterView: View {
     @State private var count = 0
 
@@ -78,14 +80,14 @@ Each layer is a separate Swift module. The binary display list is the **only thi
 | -------- | ------- | ------ |
 | **Views** | Text, Rectangle, Spacer, EmptyView | Done |
 | **Containers** | VStack, HStack, ZStack, ScrollView | Done |
-| **Modifiers** | padding, frame, background, foregroundColor, font, fontFamily, onTapGesture | Done |
+| **Modifiers** | padding, frame, background, foregroundColor, font, fontFamily, onTapGesture, drawingGroup | Done |
 | **Typography** | Font struct (.custom, .system, semantic styles), fontFamily pipeline, FontManager | Done |
 | **Layout** | ProposedSize negotiation, layoutPriority, fixedSize, flexible frame (min/ideal/max) | Done |
-| **State** | @State, Binding, automatic re-rendering | Done |
+| **State** | @State, Binding, automatic re-rendering, incremental evaluation (AttributeGraph) | Done |
 | **Accessibility** | accessibilityLabel, accessibilityRole, accessibilityHint, accessibilityHidden | Done |
-| **Rendering** | Binary display list, CanvasKit replay, retained subtrees | Done |
-| **Reconciler** | Tree diff, Patch, DirtyTracker | Done |
-| **Testing** | 12 test suites, 119 tests | Done |
+| **Rendering** | Binary display list, CanvasKit replay, retained subtrees, pipeline optimizations | Done |
+| **Reconciler** | Tree diff, Patch, DirtyTracker, RootHost integration | Done |
+| **Testing** | 21 test suites, 161 tests | Done |
 | **Rendering** | List | Planned |
 | **Rendering** | Animation system | Planned |
 | **Rendering** | Image support | Planned |
@@ -139,7 +141,9 @@ cd WebHost && pnpm install && pnpm dev
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE) for details.
+
+Third-party licenses are listed in [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES).
 
 ## Disclaimer
 
