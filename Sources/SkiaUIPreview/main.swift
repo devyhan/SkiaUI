@@ -1282,10 +1282,14 @@ while true {
                let h = (json["viewportHeight"] as? NSNumber)?.floatValue {
                 host.setViewport(width: w, height: h)
             }
-            if let tapId = host.hitTest(x: x, y: y) {
+            let tapId = host.hitTest(x: x, y: y)
+            print("[TAP] coords=(\(x),\(y)) hitTest=\(String(describing: tapId))")
+            if let tapId {
                 tapHandlers[tapId]?()
             }
+            let prevSize = currentDisplayList.count
             host.render(view)
+            print("[TAP] displayList: \(prevSize) -> \(currentDisplayList.count) bytes, changed=\(prevSize != currentDisplayList.count)")
         }
         responseBody = currentDisplayList
     } else {

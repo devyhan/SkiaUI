@@ -46,24 +46,29 @@ export async function start(CanvasKit: CanvasKit): Promise<void> {
 
   // Sync viewport with Swift server and get display list
   async function syncViewport(): Promise<void> {
-    try {
-      const res = await fetch("/api/viewport", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          width: window.innerWidth,
-          height: window.innerHeight,
-        }),
-      });
-      if (res.ok) {
-        currentBuffer = await res.arrayBuffer();
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        const res = await fetch("/api/viewport", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            width: window.innerWidth,
+            height: window.innerHeight,
+          }),
+        });
+        if (res.ok) {
+          currentBuffer = await res.arrayBuffer();
+          return;
+        }
+      } catch {
+        // Server might not be ready yet
       }
-    } catch {
-      // Fallback to static file
-      if (!currentBuffer) {
-        const res = await fetch("/displaylist.bin");
-        currentBuffer = await res.arrayBuffer();
-      }
+      await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+    }
+    // Final fallback
+    if (!currentBuffer) {
+      const res = await fetch("/displaylist.bin");
+      currentBuffer = await res.arrayBuffer();
     }
   }
 
