@@ -33,6 +33,41 @@ import Testing
         #expect(id1 != id2)
     }
 
+    @Test func scrollContainerElement() {
+        let el = Element.container(
+            .init(layout: .scroll(axis: .vertical, scrollID: 7)),
+            children: [.text("Scroll content", .init())]
+        )
+        if case .container(let props, let children) = el {
+            if case .scroll(let axis, let scrollID) = props.layout {
+                #expect(axis == .vertical)
+                #expect(scrollID == 7)
+            } else {
+                Issue.record("Expected scroll layout")
+            }
+            #expect(children.count == 1)
+        } else {
+            Issue.record("Expected container element")
+        }
+    }
+
+    @Test func scrollContainerEquatable() {
+        let a = Element.container(
+            .init(layout: .scroll(axis: .horizontal, scrollID: 3)),
+            children: [.text("A", .init())]
+        )
+        let b = Element.container(
+            .init(layout: .scroll(axis: .horizontal, scrollID: 3)),
+            children: [.text("A", .init())]
+        )
+        let c = Element.container(
+            .init(layout: .scroll(axis: .vertical, scrollID: 3)),
+            children: [.text("A", .init())]
+        )
+        #expect(a == b)
+        #expect(a != c)
+    }
+
     @Test func modifiedElement() {
         let base = Element.text("Hello", .init())
         let modified = Element.modified(base, .padding(top: 10, leading: 10, bottom: 10, trailing: 10))

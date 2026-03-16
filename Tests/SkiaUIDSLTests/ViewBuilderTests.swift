@@ -196,6 +196,63 @@ import SkiaUIElement
         }
     }
 
+    @Test func scrollViewWithChildren() {
+        let view = ScrollView {
+            Text("A")
+            Text("B")
+            Text("C")
+        }
+        let element = view.asElement()
+        if case .container(let props, let children) = element {
+            if case .scroll(let axis, _) = props.layout {
+                #expect(axis == .vertical)
+            } else {
+                Issue.record("Expected scroll layout")
+            }
+            // ScrollView wraps children in an inner VStack
+            #expect(children.count == 1)
+            if case .container(let innerProps, let innerChildren) = children[0] {
+                if case .vstack = innerProps.layout {
+                    // pass
+                } else {
+                    Issue.record("Expected inner vstack layout")
+                }
+                #expect(innerChildren.count == 3)
+            } else {
+                Issue.record("Expected inner container")
+            }
+        } else {
+            Issue.record("Expected container element")
+        }
+    }
+
+    @Test func scrollViewHorizontalAxis() {
+        let view = ScrollView(.horizontal) {
+            Text("A")
+            Text("B")
+        }
+        let element = view.asElement()
+        if case .container(let props, let children) = element {
+            if case .scroll(let axis, _) = props.layout {
+                #expect(axis == .horizontal)
+            } else {
+                Issue.record("Expected scroll layout")
+            }
+            #expect(children.count == 1)
+            if case .container(let innerProps, _) = children[0] {
+                if case .hstack = innerProps.layout {
+                    // pass — horizontal scroll wraps in HStack
+                } else {
+                    Issue.record("Expected inner hstack layout")
+                }
+            } else {
+                Issue.record("Expected inner container")
+            }
+        } else {
+            Issue.record("Expected container element")
+        }
+    }
+
     @Test func compositeView() {
         struct MyView: View {
             var body: some View {

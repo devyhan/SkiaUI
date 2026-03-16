@@ -636,6 +636,316 @@ struct NestedLayoutView: View {
     }
 }
 
+// MARK: - Layout Playground
+
+struct LayoutPlaygroundView: View {
+    @State private var containerType = 0
+    @State private var alignmentIndex = 0
+    @State private var spacingIndex = 2
+    @State private var paddingIndex = 1
+    @State private var showSpacer = 0
+    @State private var itemSizeIndex = 1
+
+    var containerLabel: String {
+        containerType == 0 ? "VStack" : (containerType == 1 ? "HStack" : "ZStack")
+    }
+
+    var alignmentLabel: String {
+        if containerType == 0 {
+            return alignmentIndex == 0 ? ".leading" : (alignmentIndex == 1 ? ".center" : ".trailing")
+        } else if containerType == 1 {
+            return alignmentIndex == 0 ? ".top" : (alignmentIndex == 1 ? ".center" : ".bottom")
+        } else {
+            return alignmentIndex == 0 ? ".topLeading" : (alignmentIndex == 1 ? ".center" : ".bottomTrailing")
+        }
+    }
+
+    var currentSpacing: Float {
+        let values: [Float] = [0, 4, 8, 16, 24, 32]
+        return values[spacingIndex]
+    }
+
+    var currentPadding: Float {
+        let values: [Float] = [0, 8, 16, 24]
+        return values[paddingIndex]
+    }
+
+    var sizeLabel: String {
+        itemSizeIndex == 0 ? "S(30)" : (itemSizeIndex == 1 ? "M(50)" : (itemSizeIndex == 2 ? "L(70)" : "Mixed"))
+    }
+
+    var size1: Float {
+        if itemSizeIndex == 1 { return 50 }
+        if itemSizeIndex == 2 { return 70 }
+        return 30
+    }
+
+    var size2: Float {
+        if itemSizeIndex == 0 { return 30 }
+        if itemSizeIndex == 2 { return 70 }
+        return 50
+    }
+
+    var size3: Float {
+        if itemSizeIndex == 0 { return 30 }
+        if itemSizeIndex == 1 { return 50 }
+        return 70
+    }
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text("Layout Playground")
+                .font(size: 24, weight: .bold)
+
+            HStack(spacing: 12) {
+                // Control panel
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Controls")
+                        .font(size: 11, weight: .bold)
+                        .foregroundColor(.gray)
+
+                    Text(containerType == 0 ? "Type: VStack" : (containerType == 1 ? "Type: HStack" : "Type: ZStack"))
+                        .font(size: 12)
+                        .padding(top: 6, leading: 10, bottom: 6, trailing: 10)
+                        .frame(width: 120)
+                        .background(Color(red: 0.2, green: 0.6, blue: 0.9))
+                        .foregroundColor(.white)
+                        .onTapGesture {
+                            containerType = (containerType + 1) % 3
+                            alignmentIndex = 0
+                        }
+
+                    Text(containerType == 0
+                        ? (alignmentIndex == 0 ? "Align: .leading" : (alignmentIndex == 1 ? "Align: .center" : "Align: .trailing"))
+                        : (containerType == 1
+                            ? (alignmentIndex == 0 ? "Align: .top" : (alignmentIndex == 1 ? "Align: .center" : "Align: .bottom"))
+                            : (alignmentIndex == 0 ? "Align: .topLeading" : (alignmentIndex == 1 ? "Align: .center" : "Align: .btmTrailing"))))
+                        .font(size: 12)
+                        .padding(top: 6, leading: 10, bottom: 6, trailing: 10)
+                        .frame(width: 120)
+                        .background(Color(red: 0.3, green: 0.5, blue: 0.85))
+                        .foregroundColor(.white)
+                        .onTapGesture { alignmentIndex = (alignmentIndex + 1) % 3 }
+
+                    Text(spacingIndex == 0 ? "Spacing: 0" : (spacingIndex == 1 ? "Spacing: 4" : (spacingIndex == 2 ? "Spacing: 8" : (spacingIndex == 3 ? "Spacing: 16" : (spacingIndex == 4 ? "Spacing: 24" : "Spacing: 32")))))
+                        .font(size: 12)
+                        .padding(top: 6, leading: 10, bottom: 6, trailing: 10)
+                        .frame(width: 120)
+                        .background(Color(red: 0.4, green: 0.7, blue: 0.4))
+                        .foregroundColor(.white)
+                        .onTapGesture { spacingIndex = (spacingIndex + 1) % 6 }
+
+                    Text(paddingIndex == 0 ? "Padding: 0" : (paddingIndex == 1 ? "Padding: 8" : (paddingIndex == 2 ? "Padding: 16" : "Padding: 24")))
+                        .font(size: 12)
+                        .padding(top: 6, leading: 10, bottom: 6, trailing: 10)
+                        .frame(width: 120)
+                        .background(Color(red: 0.6, green: 0.4, blue: 0.8))
+                        .foregroundColor(.white)
+                        .onTapGesture { paddingIndex = (paddingIndex + 1) % 4 }
+
+                    Text(showSpacer == 0 ? "Spacer: Off" : "Spacer: On")
+                        .font(size: 12)
+                        .padding(top: 6, leading: 10, bottom: 6, trailing: 10)
+                        .frame(width: 120)
+                        .background(showSpacer == 0 ? Color(white: 0.6) : .orange)
+                        .foregroundColor(.white)
+                        .onTapGesture { showSpacer = 1 - showSpacer }
+
+                    Text(itemSizeIndex == 0 ? "Size: S(30)" : (itemSizeIndex == 1 ? "Size: M(50)" : (itemSizeIndex == 2 ? "Size: L(70)" : "Size: Mixed")))
+                        .font(size: 12)
+                        .padding(top: 6, leading: 10, bottom: 6, trailing: 10)
+                        .frame(width: 120)
+                        .background(Color(red: 0.9, green: 0.5, blue: 0.3))
+                        .foregroundColor(.white)
+                        .onTapGesture { itemSizeIndex = (itemSizeIndex + 1) % 4 }
+
+                    Spacer()
+                }
+                .frame(width: 130)
+
+                // Stage area
+                VStack(spacing: 6) {
+                    Text(containerType == 0 ? "VStack" : (containerType == 1 ? "HStack" : "ZStack"))
+                        .font(size: 12, weight: .medium)
+                        .foregroundColor(.gray)
+
+                    ZStack {
+                        Rectangle().fill(Color(white: 0.92)).frame(width: 300, height: 300)
+
+                        if containerType == 0 {
+                            if showSpacer == 0 {
+                                VStack(alignment: alignmentIndex == 0 ? .leading : (alignmentIndex == 1 ? .center : .trailing), spacing: currentSpacing) {
+                                    Rectangle().fill(Color(red: 0.95, green: 0.35, blue: 0.35)).cornerRadius(6).frame(width: size1, height: size1)
+                                    Rectangle().fill(Color(red: 0.3, green: 0.5, blue: 0.9)).cornerRadius(6).frame(width: size2, height: size2)
+                                    Rectangle().fill(Color(red: 0.3, green: 0.8, blue: 0.4)).cornerRadius(6).frame(width: size3, height: size3)
+                                }
+                                .padding(currentPadding)
+                                .frame(width: 280, height: 280)
+                                .background(Color(white: 0.88))
+                            } else {
+                                VStack(alignment: alignmentIndex == 0 ? .leading : (alignmentIndex == 1 ? .center : .trailing), spacing: currentSpacing) {
+                                    Rectangle().fill(Color(red: 0.95, green: 0.35, blue: 0.35)).cornerRadius(6).frame(width: size1, height: size1)
+                                    Spacer()
+                                    Rectangle().fill(Color(red: 0.3, green: 0.5, blue: 0.9)).cornerRadius(6).frame(width: size2, height: size2)
+                                    Rectangle().fill(Color(red: 0.3, green: 0.8, blue: 0.4)).cornerRadius(6).frame(width: size3, height: size3)
+                                }
+                                .padding(currentPadding)
+                                .frame(width: 280, height: 280)
+                                .background(Color(white: 0.88))
+                            }
+                        } else if containerType == 1 {
+                            if showSpacer == 0 {
+                                HStack(alignment: alignmentIndex == 0 ? .top : (alignmentIndex == 1 ? .center : .bottom), spacing: currentSpacing) {
+                                    Rectangle().fill(Color(red: 0.95, green: 0.35, blue: 0.35)).cornerRadius(6).frame(width: size1, height: size1)
+                                    Rectangle().fill(Color(red: 0.3, green: 0.5, blue: 0.9)).cornerRadius(6).frame(width: size2, height: size2)
+                                    Rectangle().fill(Color(red: 0.3, green: 0.8, blue: 0.4)).cornerRadius(6).frame(width: size3, height: size3)
+                                }
+                                .padding(currentPadding)
+                                .frame(width: 280, height: 280)
+                                .background(Color(white: 0.88))
+                            } else {
+                                HStack(alignment: alignmentIndex == 0 ? .top : (alignmentIndex == 1 ? .center : .bottom), spacing: currentSpacing) {
+                                    Rectangle().fill(Color(red: 0.95, green: 0.35, blue: 0.35)).cornerRadius(6).frame(width: size1, height: size1)
+                                    Spacer()
+                                    Rectangle().fill(Color(red: 0.3, green: 0.5, blue: 0.9)).cornerRadius(6).frame(width: size2, height: size2)
+                                    Rectangle().fill(Color(red: 0.3, green: 0.8, blue: 0.4)).cornerRadius(6).frame(width: size3, height: size3)
+                                }
+                                .padding(currentPadding)
+                                .frame(width: 280, height: 280)
+                                .background(Color(white: 0.88))
+                            }
+                        } else {
+                            if showSpacer == 0 {
+                                ZStack(alignment: alignmentIndex == 0 ? .topLeading : (alignmentIndex == 1 ? .center : .bottomTrailing)) {
+                                    Rectangle().fill(Color(red: 0.95, green: 0.35, blue: 0.35)).cornerRadius(6).frame(width: size1, height: size1)
+                                    Rectangle().fill(Color(red: 0.3, green: 0.5, blue: 0.9)).cornerRadius(6).frame(width: size2, height: size2)
+                                    Rectangle().fill(Color(red: 0.3, green: 0.8, blue: 0.4)).cornerRadius(6).frame(width: size3, height: size3)
+                                }
+                                .padding(currentPadding)
+                                .frame(width: 280, height: 280)
+                                .background(Color(white: 0.88))
+                            } else {
+                                ZStack(alignment: alignmentIndex == 0 ? .topLeading : (alignmentIndex == 1 ? .center : .bottomTrailing)) {
+                                    Rectangle().fill(Color(red: 0.95, green: 0.35, blue: 0.35)).cornerRadius(6).frame(width: size1, height: size1)
+                                    Spacer()
+                                    Rectangle().fill(Color(red: 0.3, green: 0.5, blue: 0.9)).cornerRadius(6).frame(width: size2, height: size2)
+                                    Rectangle().fill(Color(red: 0.3, green: 0.8, blue: 0.4)).cornerRadius(6).frame(width: size3, height: size3)
+                                }
+                                .padding(currentPadding)
+                                .frame(width: 280, height: 280)
+                                .background(Color(white: 0.88))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding(24)
+    }
+}
+
+// MARK: - ScrollView Demo
+
+struct ScrollViewDemoView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("ScrollView").font(size: 24, weight: .bold)
+
+            // 1. Vertical scroll
+            Text("1. Vertical Scroll").font(size: 16, weight: .semibold)
+            Text("Scroll down to see more items")
+                .font(size: 12).foregroundColor(.gray)
+            ScrollView {
+                VStack(spacing: 8) {
+                    Text("Item 1").padding(12).frame(maxWidth: .infinity).background(Color(red: 0.95, green: 0.35, blue: 0.35)).foregroundColor(.white)
+                    Text("Item 2").padding(12).frame(maxWidth: .infinity).background(Color(red: 0.9, green: 0.5, blue: 0.3)).foregroundColor(.white)
+                    Text("Item 3").padding(12).frame(maxWidth: .infinity).background(Color(red: 0.9, green: 0.8, blue: 0.2)).foregroundColor(.white)
+                    Text("Item 4").padding(12).frame(maxWidth: .infinity).background(Color(red: 0.3, green: 0.8, blue: 0.4)).foregroundColor(.white)
+                    Text("Item 5").padding(12).frame(maxWidth: .infinity).background(Color(red: 0.3, green: 0.5, blue: 0.9)).foregroundColor(.white)
+                    Text("Item 6").padding(12).frame(maxWidth: .infinity).background(Color(red: 0.6, green: 0.4, blue: 0.8)).foregroundColor(.white)
+                    Text("Item 7").padding(12).frame(maxWidth: .infinity).background(Color(red: 0.8, green: 0.3, blue: 0.6)).foregroundColor(.white)
+                    Text("Item 8").padding(12).frame(maxWidth: .infinity).background(Color(red: 0.4, green: 0.7, blue: 0.7)).foregroundColor(.white)
+                }
+            }
+            .frame(width: 250, height: 150)
+            .background(Color(white: 0.95))
+
+            // 2. Horizontal scroll
+            Text("2. Horizontal Scroll").font(size: 16, weight: .semibold)
+            Text("Scroll right to see more colors")
+                .font(size: 12).foregroundColor(.gray)
+            ScrollView(.horizontal) {
+                HStack(spacing: 8) {
+                    Rectangle().fill(.red).cornerRadius(8).frame(width: 80, height: 80)
+                    Rectangle().fill(.orange).cornerRadius(8).frame(width: 80, height: 80)
+                    Rectangle().fill(.yellow).cornerRadius(8).frame(width: 80, height: 80)
+                    Rectangle().fill(.green).cornerRadius(8).frame(width: 80, height: 80)
+                    Rectangle().fill(.blue).cornerRadius(8).frame(width: 80, height: 80)
+                    Rectangle().fill(.purple).cornerRadius(8).frame(width: 80, height: 80)
+                    Rectangle().fill(Color(red: 0.9, green: 0.3, blue: 0.5)).cornerRadius(8).frame(width: 80, height: 80)
+                    Rectangle().fill(Color(red: 0.2, green: 0.6, blue: 0.9)).cornerRadius(8).frame(width: 80, height: 80)
+                }
+            }
+            .frame(width: 300, height: 96)
+            .background(Color(white: 0.95))
+
+            // 3. Scrollable card list
+            Text("3. Card List").font(size: 16, weight: .semibold)
+            ScrollView {
+                VStack(spacing: 8) {
+                    HStack(spacing: 8) {
+                        Rectangle().fill(.blue).cornerRadius(8).frame(width: 32, height: 32)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Alice").font(size: 14, weight: .bold)
+                            Text("Online").font(size: 11).foregroundColor(.green)
+                        }
+                        Spacer()
+                    }.padding(8).background(Color(white: 0.97))
+
+                    HStack(spacing: 8) {
+                        Rectangle().fill(.orange).cornerRadius(8).frame(width: 32, height: 32)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Bob").font(size: 14, weight: .bold)
+                            Text("Away").font(size: 11).foregroundColor(.orange)
+                        }
+                        Spacer()
+                    }.padding(8).background(Color(white: 0.97))
+
+                    HStack(spacing: 8) {
+                        Rectangle().fill(.green).cornerRadius(8).frame(width: 32, height: 32)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Charlie").font(size: 14, weight: .bold)
+                            Text("Online").font(size: 11).foregroundColor(.green)
+                        }
+                        Spacer()
+                    }.padding(8).background(Color(white: 0.97))
+
+                    HStack(spacing: 8) {
+                        Rectangle().fill(.purple).cornerRadius(8).frame(width: 32, height: 32)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Diana").font(size: 14, weight: .bold)
+                            Text("Offline").font(size: 11).foregroundColor(.gray)
+                        }
+                        Spacer()
+                    }.padding(8).background(Color(white: 0.97))
+
+                    HStack(spacing: 8) {
+                        Rectangle().fill(.red).cornerRadius(8).frame(width: 32, height: 32)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Eve").font(size: 14, weight: .bold)
+                            Text("Busy").font(size: 11).foregroundColor(.red)
+                        }
+                        Spacer()
+                    }.padding(8).background(Color(white: 0.97))
+                }
+            }
+            .frame(width: 250, height: 130)
+            .background(Color(white: 0.92))
+        }
+        .padding(32)
+    }
+}
+
 // MARK: - Dashboard Layout
 
 struct DashboardView: View {
@@ -650,6 +960,8 @@ struct DashboardView: View {
     let fixedSizeDemoView = FixedSizeDemoView()
     let advancedLayoutView = AdvancedLayoutView()
     let nestedLayoutView = NestedLayoutView()
+    let scrollViewDemoView = ScrollViewDemoView()
+    let layoutPlaygroundView = LayoutPlaygroundView()
 
     var body: some View {
         HStack(spacing: 0) {
@@ -727,6 +1039,20 @@ struct DashboardView: View {
                     .foregroundColor(selectedExample == 7 ? .white : .black)
                     .onTapGesture { selectedExample = 7 }
 
+                Text("ScrollView")
+                    .padding(top: 8, leading: 16, bottom: 8, trailing: 16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(selectedExample == 11 ? .blue : .clear)
+                    .foregroundColor(selectedExample == 11 ? .white : .black)
+                    .onTapGesture { selectedExample = 11 }
+
+                Text("Playground")
+                    .padding(top: 8, leading: 16, bottom: 8, trailing: 16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(selectedExample == 10 ? .blue : .clear)
+                    .foregroundColor(selectedExample == 10 ? .white : .black)
+                    .onTapGesture { selectedExample = 10 }
+
                 // Section: Patterns
                 Text("Patterns")
                     .font(size: 11, weight: .bold)
@@ -773,8 +1099,12 @@ struct DashboardView: View {
                 nestedLayoutView
             } else if selectedExample == 8 {
                 advancedLayoutView
-            } else {
+            } else if selectedExample == 9 {
                 accessibilityView
+            } else if selectedExample == 11 {
+                scrollViewDemoView
+            } else {
+                layoutPlaygroundView
             }
 
             Spacer()
@@ -868,6 +1198,21 @@ while true {
            let w = (json["width"] as? NSNumber)?.floatValue,
            let h = (json["height"] as? NSNumber)?.floatValue {
             host.setViewport(width: w, height: h)
+            host.render(view)
+        }
+        responseBody = currentDisplayList
+    } else if method == "POST" && path == "/api/scroll" {
+        if let body = body,
+           let json = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
+           let x = (json["x"] as? NSNumber)?.floatValue,
+           let y = (json["y"] as? NSNumber)?.floatValue,
+           let deltaX = (json["deltaX"] as? NSNumber)?.floatValue,
+           let deltaY = (json["deltaY"] as? NSNumber)?.floatValue {
+            if let w = (json["viewportWidth"] as? NSNumber)?.floatValue,
+               let h = (json["viewportHeight"] as? NSNumber)?.floatValue {
+                host.setViewport(width: w, height: h)
+            }
+            host.handleScroll(x: x, y: y, deltaX: deltaX, deltaY: deltaY)
             host.render(view)
         }
         responseBody = currentDisplayList

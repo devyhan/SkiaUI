@@ -89,6 +89,47 @@ import SkiaUIElement
         }
     }
 
+    @Test func identicalScrollContainersNoPatch() {
+        let tree = Element.container(
+            .init(layout: .scroll(axis: .vertical, scrollID: 0)),
+            children: [.text("A", .init())]
+        )
+        let patches = reconciler.diff(old: tree, new: tree)
+        #expect(patches.isEmpty)
+    }
+
+    @Test func scrollContainerChildChange() {
+        let old = Element.container(
+            .init(layout: .scroll(axis: .vertical, scrollID: 0)),
+            children: [.text("A", .init())]
+        )
+        let new = Element.container(
+            .init(layout: .scroll(axis: .vertical, scrollID: 0)),
+            children: [.text("B", .init())]
+        )
+        let patches = reconciler.diff(old: old, new: new)
+        #expect(patches.count == 1)
+        if case .update(let path, _, _) = patches.first {
+            #expect(path.indices == [0])
+        } else {
+            Issue.record("Expected update patch for scroll container child")
+        }
+    }
+
+    @Test func scrollAxisChangePatch() {
+        let old = Element.container(
+            .init(layout: .scroll(axis: .vertical, scrollID: 0)),
+            children: [.text("A", .init())]
+        )
+        let new = Element.container(
+            .init(layout: .scroll(axis: .horizontal, scrollID: 0)),
+            children: [.text("A", .init())]
+        )
+        let patches = reconciler.diff(old: old, new: new)
+        // ContainerProperties changed → should produce a patch
+        #expect(!patches.isEmpty)
+    }
+
     @Test func dirtyTracker() {
         var tracker = DirtyTracker()
         let path = ElementPath([1, 2])
