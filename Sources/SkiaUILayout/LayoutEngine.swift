@@ -72,14 +72,15 @@ public struct LayoutEngine: Sendable {
         }
     }
 
-    private func applyFontToElement(_ element: Element, size: Float, weight: Int) -> Element {
+    private func applyFontToElement(_ element: Element, size: Float, weight: Int, family: String? = nil) -> Element {
         switch element {
         case .text(let text, var props):
             props.fontSize = size
             props.fontWeight = weight
+            if let family { props.fontFamily = family }
             return .text(text, props)
         case .modified(let inner, let mod):
-            return .modified(applyFontToElement(inner, size: size, weight: weight), mod)
+            return .modified(applyFontToElement(inner, size: size, weight: weight, family: family), mod)
         default:
             return element
         }
@@ -122,8 +123,8 @@ public struct LayoutEngine: Sendable {
             }
             return LayoutNode(width: frameW, height: frameH, children: [child])
 
-        case .font(let size, let weight):
-            let patched = applyFontToElement(element, size: size, weight: weight)
+        case .font(let size, let weight, let family):
+            let patched = applyFontToElement(element, size: size, weight: weight, family: family)
             return layoutElement(patched, proposal: proposal)
 
         case .layoutPriority:

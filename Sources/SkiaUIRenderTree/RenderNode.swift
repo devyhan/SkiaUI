@@ -33,7 +33,8 @@ public struct TextContent: Equatable, Sendable {
     public var fontSize: Float
     public var fontWeight: Int
     public var color: UInt32
-    public init(text: String, fontSize: Float = 14, fontWeight: Int = 400, color: UInt32 = 0xFF000000) {
-        self.text = text; self.fontSize = fontSize; self.fontWeight = fontWeight; self.color = color
+    public var fontFamily: String?
+    public init(text: String, fontSize: Float = 14, fontWeight: Int = 400, color: UInt32 = 0xFF000000, fontFamily: String? = nil) {
+        self.text = text; self.fontSize = fontSize; self.fontWeight = fontWeight; self.color = color; self.fontFamily = fontFamily
     }
 }

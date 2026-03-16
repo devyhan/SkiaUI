@@ -8,6 +8,7 @@ public struct Text: PrimitiveView {
     var _fontSize: Float = 14
     var _fontWeight: Int = 400
     var _foregroundColor: Element.ElementColor?
+    var _fontFamily: String?
 
     public init(_ content: String) {
         self.content = content
@@ -17,7 +18,8 @@ public struct Text: PrimitiveView {
         .text(content, .init(
             fontSize: _fontSize,
             fontWeight: _fontWeight,
-            foregroundColor: _foregroundColor
+            foregroundColor: _foregroundColor,
+            fontFamily: _fontFamily
         ))
     }
 }
@@ -48,6 +50,13 @@ extension Text {
     public func foregroundColor(_ color: Color) -> Text {
         var copy = self
         copy._foregroundColor = .init(r: color.red, g: color.green, b: color.blue, a: color.alpha)
+        return copy
+    }
+
+    /// Sets the font family for this text view.
+    public func fontFamily(_ family: String) -> Text {
+        var copy = self
+        copy._fontFamily = family
         return copy
     }
 }

@@ -39,7 +39,7 @@ public struct DisplayListBuilder: Sendable {
 
         // Draw text
         if let text = node.textContent {
-            list.append(.drawText(text: text.text, x: 0, y: text.fontSize, fontSize: text.fontSize, fontWeight: text.fontWeight, color: text.color, boundsWidth: w))
+            list.append(.drawText(text: text.text, x: 0, y: text.fontSize, fontSize: text.fontSize, fontWeight: text.fontWeight, color: text.color, boundsWidth: w, fontFamily: text.fontFamily))
         }
 
         // Draw children

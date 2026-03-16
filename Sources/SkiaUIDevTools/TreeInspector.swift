@@ -15,7 +15,8 @@ public struct TreeInspector: Sendable {
         case .empty:
             lines.append("\(prefix)EmptyView")
         case .text(let text, let props):
-            lines.append("\(prefix)Text(\"\(text)\", fontSize: \(props.fontSize), weight: \(props.fontWeight))")
+            let familyStr = props.fontFamily.map { ", family: \"\($0)\"" } ?? ""
+            lines.append("\(prefix)Text(\"\(text)\", fontSize: \(props.fontSize), weight: \(props.fontWeight)\(familyStr))")
         case .rectangle(let props):
             lines.append("\(prefix)Rectangle(color: 0x\(String(props.fillColor.uint32, radix: 16)), radius: \(props.cornerRadius))")
         case .spacer(let minLength):

@@ -946,6 +946,52 @@ struct ScrollViewDemoView: View {
     }
 }
 
+// MARK: - Custom Font Demo
+
+struct CustomFontDemoView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Monaspace").font(.custom("Monaspace Neon Bold", size: 28))
+
+            // Neon
+            Text("Monaspace Neon").font(.custom("Monaspace Neon", size: 11)).foregroundColor(.gray)
+            Text("ABCDEFGHIJKLM abcdefghijklm 0123456789")
+                .font(.custom("Monaspace Neon", size: 16))
+
+            // Argon
+            Text("Monaspace Argon").font(.custom("Monaspace Argon", size: 11)).foregroundColor(.gray)
+            Text("ABCDEFGHIJKLM abcdefghijklm 0123456789")
+                .font(.custom("Monaspace Argon", size: 16))
+
+            // Xenon
+            Text("Monaspace Xenon").font(.custom("Monaspace Xenon", size: 11)).foregroundColor(.gray)
+            Text("ABCDEFGHIJKLM abcdefghijklm 0123456789")
+                .font(.custom("Monaspace Xenon", size: 16))
+
+            // Radon
+            Text("Monaspace Radon").font(.custom("Monaspace Radon", size: 11)).foregroundColor(.gray)
+            Text("ABCDEFGHIJKLM abcdefghijklm 0123456789")
+                .font(.custom("Monaspace Radon", size: 16))
+
+            // Krypton
+            Text("Monaspace Krypton").font(.custom("Monaspace Krypton", size: 11)).foregroundColor(.gray)
+            Text("ABCDEFGHIJKLM abcdefghijklm 0123456789")
+                .font(.custom("Monaspace Krypton", size: 16))
+
+            // Size scale
+            Rectangle().fill(Color(white: 0.88)).frame(height: 1)
+                .padding(top: 4, leading: 0, bottom: 4, trailing: 0)
+            Text("Size Scale (Neon)").font(.custom("Monaspace Neon", size: 11)).foregroundColor(.gray)
+            Text("11px").font(.custom("Monaspace Neon", size: 11))
+            Text("14px").font(.custom("Monaspace Neon", size: 14))
+            Text("18px").font(.custom("Monaspace Neon", size: 18))
+            Text("24px").font(.custom("Monaspace Neon", size: 24))
+            Text("32px").font(.custom("Monaspace Neon Bold", size: 32))
+        }
+        .padding(32)
+    }
+}
+
 // MARK: - Dashboard Layout
 
 struct DashboardView: View {
@@ -961,6 +1007,7 @@ struct DashboardView: View {
     let advancedLayoutView = AdvancedLayoutView()
     let nestedLayoutView = NestedLayoutView()
     let scrollViewDemoView = ScrollViewDemoView()
+    let customFontDemoView = CustomFontDemoView()
     let layoutPlaygroundView = LayoutPlaygroundView()
 
     var body: some View {
@@ -997,6 +1044,13 @@ struct DashboardView: View {
                     .background(selectedExample == 2 ? .blue : .clear)
                     .foregroundColor(selectedExample == 2 ? .white : .black)
                     .onTapGesture { selectedExample = 2 }
+
+                Text("Custom Font")
+                    .padding(top: 8, leading: 16, bottom: 8, trailing: 16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(selectedExample == 12 ? .blue : .clear)
+                    .foregroundColor(selectedExample == 12 ? .white : .black)
+                    .onTapGesture { selectedExample = 12 }
 
                 // Section: Layout System
                 Text("Layout System")
@@ -1103,6 +1157,8 @@ struct DashboardView: View {
                 accessibilityView
             } else if selectedExample == 11 {
                 scrollViewDemoView
+            } else if selectedExample == 12 {
+                customFontDemoView
             } else {
                 layoutPlaygroundView
             }

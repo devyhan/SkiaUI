@@ -73,7 +73,7 @@ public struct CommandEncoder: Sendable {
             appendFloat(&buffer, h)
             appendFloat(&buffer, radius)
             appendUInt32(&buffer, color)
-        case .drawText(let text, let x, let y, let fontSize, let fontWeight, let color, let boundsWidth):
+        case .drawText(let text, let x, let y, let fontSize, let fontWeight, let color, let boundsWidth, let fontFamily):
             buffer.append(Self.OP_DRAW_TEXT)
             let textBytes = Array(text.utf8)
             appendInt32(&buffer, Int32(textBytes.count))
@@ -84,6 +84,13 @@ public struct CommandEncoder: Sendable {
             appendInt32(&buffer, Int32(fontWeight))
             appendUInt32(&buffer, color)
             appendFloat(&buffer, boundsWidth)
+            if let family = fontFamily {
+                let familyBytes = Array(family.utf8)
+                appendInt32(&buffer, Int32(familyBytes.count))
+                buffer.append(contentsOf: familyBytes)
+            } else {
+                appendInt32(&buffer, 0)
+            }
         case .retainedSubtreeBegin(let id, let version):
             buffer.append(Self.OP_RETAINED_BEGIN)
             appendInt32(&buffer, Int32(id))
@@ -136,7 +143,17 @@ public struct CommandEncoder: Sendable {
             let fontWeight = readInt32(data, &offset)
             let color = readUInt32(data, &offset)
             let boundsWidth = readFloat(data, &offset)
-            return .drawText(text: text, x: x, y: y, fontSize: fontSize, fontWeight: Int(fontWeight), color: color, boundsWidth: boundsWidth)
+            let familyLen = Int(readInt32(data, &offset))
+            let fontFamily: String?
+            if familyLen > 0 {
+                guard offset + familyLen <= data.count else { return nil }
+                let familyBytes = Array(data[offset..<offset+familyLen])
+                offset += familyLen
+                fontFamily = String(decoding: familyBytes, as: UTF8.self)
+            } else {
+                fontFamily = nil
+            }
+            return .drawText(text: text, x: x, y: y, fontSize: fontSize, fontWeight: Int(fontWeight), color: color, boundsWidth: boundsWidth, fontFamily: fontFamily)
         case Self.OP_RETAINED_BEGIN:
             let id = readInt32(data, &offset)
             let ver = readInt32(data, &offset)

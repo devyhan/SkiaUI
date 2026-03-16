@@ -24,7 +24,8 @@ public struct RenderTreeBuilder: Sendable {
                     text: text,
                     fontSize: props.fontSize,
                     fontWeight: props.fontWeight,
-                    color: color
+                    color: color,
+                    fontFamily: props.fontFamily
                 )
             )
 
@@ -85,9 +86,9 @@ public struct RenderTreeBuilder: Sendable {
             color = fgColor.uint32
             return buildNode(element: inner, layout: layout, inheritedColor: color, scrollOffsets: scrollOffsets)
 
-        case .font(let size, let weight):
+        case .font(let size, let weight, let family):
             let node = buildNode(element: inner, layout: layout, inheritedColor: color, scrollOffsets: scrollOffsets)
-            applyFont(to: node, size: size, weight: weight)
+            applyFont(to: node, size: size, weight: weight, family: family)
             return node
 
         case .padding, .frame:
@@ -104,14 +105,15 @@ public struct RenderTreeBuilder: Sendable {
         }
     }
 
-    private func applyFont(to node: RenderNode, size: Float, weight: Int) {
+    private func applyFont(to node: RenderNode, size: Float, weight: Int, family: String? = nil) {
         if var tc = node.textContent {
             tc.fontSize = size
             tc.fontWeight = weight
+            if let family { tc.fontFamily = family }
             node.textContent = tc
         }
         for child in node.children {
-            applyFont(to: child, size: size, weight: weight)
+            applyFont(to: child, size: size, weight: weight, family: family)
         }
     }
 }

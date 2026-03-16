@@ -13,8 +13,9 @@ public indirect enum Element: Equatable, Sendable {
         public var fontSize: Float
         public var fontWeight: Int
         public var foregroundColor: ElementColor?
-        public init(fontSize: Float = 14, fontWeight: Int = 400, foregroundColor: ElementColor? = nil) {
-            self.fontSize = fontSize; self.fontWeight = fontWeight; self.foregroundColor = foregroundColor
+        public var fontFamily: String?
+        public init(fontSize: Float = 14, fontWeight: Int = 400, foregroundColor: ElementColor? = nil, fontFamily: String? = nil) {
+            self.fontSize = fontSize; self.fontWeight = fontWeight; self.foregroundColor = foregroundColor; self.fontFamily = fontFamily
         }
     }
 
@@ -92,7 +93,7 @@ public indirect enum Element: Equatable, Sendable {
         case frame(FrameProperties)
         case background(ElementColor)
         case foregroundColor(ElementColor)
-        case font(size: Float, weight: Int)
+        case font(size: Float, weight: Int, family: String? = nil)
         case onTap(id: Int)
         case accessibilityLabel(String)
         case accessibilityRole(String)
