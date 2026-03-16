@@ -77,4 +77,44 @@ import Testing
             Issue.record("Expected modified element")
         }
     }
+
+    @Test func textPropertiesWithFontFamily() {
+        let props = Element.TextProperties(fontSize: 18, fontWeight: 700, fontFamily: "Courier")
+        #expect(props.fontFamily == "Courier")
+        #expect(props.fontSize == 18)
+        #expect(props.fontWeight == 700)
+    }
+
+    @Test func textPropertiesFontFamilyNilByDefault() {
+        let props = Element.TextProperties()
+        #expect(props.fontFamily == nil)
+    }
+
+    @Test func fontModifierWithFamily() {
+        let mod = Element.Modifier.font(size: 20, weight: 400, family: "Helvetica")
+        if case .font(let size, let weight, let family) = mod {
+            #expect(size == 20)
+            #expect(weight == 400)
+            #expect(family == "Helvetica")
+        } else {
+            Issue.record("Expected font modifier")
+        }
+    }
+
+    @Test func fontModifierFamilyDefaultNil() {
+        let mod = Element.Modifier.font(size: 14, weight: 400)
+        if case .font(_, _, let family) = mod {
+            #expect(family == nil)
+        } else {
+            Issue.record("Expected font modifier")
+        }
+    }
+
+    @Test func textElementWithFontFamilyEquatable() {
+        let a = Element.text("Hi", .init(fontFamily: "Courier"))
+        let b = Element.text("Hi", .init(fontFamily: "Courier"))
+        let c = Element.text("Hi", .init(fontFamily: "Arial"))
+        #expect(a == b)
+        #expect(a != c)
+    }
 }

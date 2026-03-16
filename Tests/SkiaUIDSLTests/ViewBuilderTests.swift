@@ -4,6 +4,7 @@
 import Testing
 @testable import SkiaUIDSL
 import SkiaUIElement
+import SkiaUIText
 
 @Suite struct ViewBuilderTests {
     @Test func emptyViewBuilder() {
@@ -267,6 +268,106 @@ import SkiaUIElement
             #expect(children.count == 2)
         } else {
             Issue.record("Expected container element from composite view")
+        }
+    }
+
+    @Test func textWithFontFamily() {
+        let view = Text("Hi").fontFamily("Courier")
+        let element = view.asElement()
+        if case .text(let s, let props) = element {
+            #expect(s == "Hi")
+            #expect(props.fontFamily == "Courier")
+        } else {
+            Issue.record("Expected text element")
+        }
+    }
+
+    @Test func textFontFamilyNilByDefault() {
+        let view = Text("Hello")
+        let element = view.asElement()
+        if case .text(_, let props) = element {
+            #expect(props.fontFamily == nil)
+        } else {
+            Issue.record("Expected text element")
+        }
+    }
+
+    @Test func fontCustomDescriptor() {
+        let font = Font.custom("Arial", size: 20)
+        #expect(font.descriptor.family == "Arial")
+        #expect(font.descriptor.size == 20)
+        #expect(font.descriptor.weight == .regular)
+    }
+
+    @Test func fontSystemDescriptor() {
+        let font = Font.system(size: 16, weight: .bold, design: .monospaced)
+        #expect(font.descriptor.family == "monospace")
+        #expect(font.descriptor.size == 16)
+        #expect(font.descriptor.weight == .bold)
+    }
+
+    @Test func fontSemanticStyles() {
+        #expect(Font.title.descriptor.size == 28)
+        #expect(Font.headline.descriptor.weight == .semibold)
+        #expect(Font.body.descriptor.size == 17)
+        #expect(Font.caption.descriptor.size == 12)
+    }
+
+    @Test func fontWeightChaining() {
+        let font = Font.custom("Test", size: 14).bold()
+        #expect(font.descriptor.weight == .bold)
+        #expect(font.descriptor.family == "Test")
+    }
+
+    @Test func fontModifierWithFontStruct() {
+        let view = Text("Hello").font(.custom("Monaspace Neon", size: 20))
+        let element = view.asElement()
+        if case .modified(let inner, .font(let size, let weight, let family)) = element {
+            #expect(size == 20)
+            #expect(weight == 400)
+            #expect(family == "Monaspace Neon")
+            if case .text(let s, _) = inner {
+                #expect(s == "Hello")
+            } else {
+                Issue.record("Expected inner text element")
+            }
+        } else {
+            Issue.record("Expected modified element with font modifier, got: \(element)")
+        }
+    }
+
+    @Test func fontModifierSystemUIFilteredToNil() {
+        let view = Text("System").font(.system(size: 17))
+        let element = view.asElement()
+        if case .modified(_, .font(let size, _, let family)) = element {
+            #expect(size == 17)
+            #expect(family == nil)
+        } else {
+            Issue.record("Expected modified element with font modifier")
+        }
+    }
+
+    @Test func fontDesignFamilyMapping() {
+        let defaultFont = Font.system(size: 14, design: .default)
+        let monoFont = Font.system(size: 14, design: .monospaced)
+        let serifFont = Font.system(size: 14, design: .serif)
+        let roundedFont = Font.system(size: 14, design: .rounded)
+        #expect(defaultFont.descriptor.family == "system-ui")
+        #expect(monoFont.descriptor.family == "monospace")
+        #expect(serifFont.descriptor.family == "serif")
+        #expect(roundedFont.descriptor.family == "system-ui")
+    }
+
+    @Test func fontModifierBoldWithCustomFamily() {
+        let font = Font.custom("Monaspace Neon", size: 16).bold()
+        let view = Text("Bold").font(font)
+        let element = view.asElement()
+        if case .modified(_, .font(let size, let weight, let family)) = element {
+            #expect(size == 16)
+            #expect(weight == 700)
+            #expect(family == "Monaspace Neon")
+        } else {
+            Issue.record("Expected modified element with font modifier")
         }
     }
 }

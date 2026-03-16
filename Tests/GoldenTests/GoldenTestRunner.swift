@@ -44,7 +44,9 @@ public struct GoldenTestRunner {
         case .clipRect(let x, let y, let w, let h): return "clipRect(\(x), \(y), \(w), \(h))"
         case .drawRect(let x, let y, let w, let h, let c): return "drawRect(\(x), \(y), \(w), \(h), 0x\(String(c, radix: 16, uppercase: true)))"
         case .drawRRect(let x, let y, let w, let h, let r, let c): return "drawRRect(\(x), \(y), \(w), \(h), r=\(r), 0x\(String(c, radix: 16, uppercase: true)))"
-        case .drawText(let text, let x, let y, let fs, let fw, let c, let bw): return "drawText(\"\(text)\", \(x), \(y), fs=\(fs), fw=\(fw), 0x\(String(c, radix: 16, uppercase: true)), bw=\(bw))"
+        case .drawText(let text, let x, let y, let fs, let fw, let c, let bw, let ff):
+            let familyStr = ff.map { ", ff=\($0)" } ?? ""
+            return "drawText(\"\(text)\", \(x), \(y), fs=\(fs), fw=\(fw), 0x\(String(c, radix: 16, uppercase: true)), bw=\(bw)\(familyStr))"
         case .retainedSubtreeBegin(let id, let v): return "retainedBegin(id=\(id), v=\(v))"
         case .retainedSubtreeEnd: return "retainedEnd"
         }

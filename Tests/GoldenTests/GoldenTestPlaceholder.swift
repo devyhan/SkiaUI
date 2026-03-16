@@ -131,4 +131,25 @@ import SkiaUIDisplayList
         // Each node gets save+restore, text nodes get drawText
         #expect(dl.commands.count > 0)
     }
+
+    @Test func customFontFamilyInDisplayList() {
+        let runner = makeRunner()
+        let view = Text("Custom").font(.custom("Monaspace Neon", size: 18))
+        let dl = runner.captureDisplayList(view)
+        let serialized = runner.serialize(dl)
+        #expect(serialized.contains("drawText"))
+        #expect(serialized.contains("ff=Monaspace Neon"))
+        #expect(serialized.contains("fs=18.0"))
+    }
+
+    @Test func systemFontNoFamilyInDisplayList() {
+        let runner = makeRunner()
+        let view = Text("System").font(.system(size: 20))
+        let dl = runner.captureDisplayList(view)
+        let serialized = runner.serialize(dl)
+        #expect(serialized.contains("drawText"))
+        // system-ui should not appear as a family in the display list
+        #expect(!serialized.contains("ff=system-ui"))
+        #expect(serialized.contains("fs=20.0"))
+    }
 }

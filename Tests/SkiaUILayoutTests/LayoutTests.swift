@@ -194,4 +194,18 @@ import SkiaUIElement
         // fixedSize should give intrinsic width regardless of small proposal
         #expect(constrained.width == intrinsic.width)
     }
+
+    @Test func fontModifierWithFamilyPropagation() {
+        // .font modifier with family should propagate to text element for layout
+        let el = Element.modified(
+            .text("Hello", .init(fontSize: 14)),
+            .font(size: 24, weight: 700, family: "Courier")
+        )
+        let node = engine.layout(el, proposal: ProposedSize(width: 200, height: 100))
+        // Layout should use fontSize 24 (from modifier), not 14 (from text)
+        let expectedWidth = Float(5) * 24 * 0.6  // 72
+        let expectedHeight = 24 * Float(1.2)     // 28.8
+        #expect(abs(node.width - expectedWidth) < 0.01)
+        #expect(abs(node.height - expectedHeight) < 0.01)
+    }
 }
