@@ -77,15 +77,15 @@ Each layer is a separate Swift module. The binary display list is the **only thi
 | Category | Feature | Status |
 | -------- | ------- | ------ |
 | **Views** | Text, Rectangle, Spacer, EmptyView | Done |
-| **Containers** | VStack, HStack, ZStack | Done |
+| **Containers** | VStack, HStack, ZStack, ScrollView | Done |
 | **Modifiers** | padding, frame, background, foregroundColor, font, onTapGesture | Done |
 | **Layout** | ProposedSize negotiation, layoutPriority, fixedSize, flexible frame (min/ideal/max) | Done |
 | **State** | @State, Binding, automatic re-rendering | Done |
 | **Accessibility** | accessibilityLabel, accessibilityRole, accessibilityHint, accessibilityHidden | Done |
 | **Rendering** | Binary display list, CanvasKit replay, retained subtrees | Done |
 | **Reconciler** | Tree diff, Patch, DirtyTracker | Done |
-| **Testing** | 8 test suites, 66 tests | Done |
-| **Rendering** | ScrollView / List | Planned |
+| **Testing** | 12 test suites, 96 tests | Done |
+| **Rendering** | List | Planned |
 | **Rendering** | Animation system | Planned |
 | **Rendering** | Image support | Planned |
 | **Platform** | Native Skia backend (Metal / Vulkan) | Planned |

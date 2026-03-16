@@ -172,7 +172,7 @@ SkiaUI (umbrella)
 SkiaUIDSL           -> [SkiaUIElement, SkiaUIText]
   Viewプロトコル、@ViewBuilder、PrimitiveViewプロトコル
   Primitives:   Text, Rectangle, Spacer, EmptyView
-  Containers:   VStack, HStack, ZStack
+  Containers:   VStack, HStack, ZStack, ScrollView
   Modifiers:    padding, frame, background, foregroundColor, font,
                 onTapGesture, accessibilityLabel/Role/Hint/Hidden
   Types:        Color, Alignment, EdgeInsets, Rect
@@ -251,6 +251,7 @@ public protocol LayoutStrategy: Sendable {
 | `VStack(alignment:spacing:)` | 垂直レイアウト |
 | `HStack(alignment:spacing:)` | 水平レイアウト |
 | `ZStack(alignment:)` | オーバーレイ/レイヤーレイアウト |
+| `ScrollView(_:)` | スクロール可能コンテナ（`.vertical`または`.horizontal`） |
 
 ### View modifier
 
@@ -307,8 +308,8 @@ SkiaUIは初期開発段階です。
 
 - [x] `@ViewBuilder`ベースのResultBuilder DSL
 - [x] 4つのprimitiveビュー
-- [x] 3つのcontainerビュー
-- [x] 10個のview modifier + 2個のRectangle専用modifier
+- [x] 4つのcontainerビュー（`VStack`、`HStack`、`ZStack`、`ScrollView`）
+- [x] 12個のview modifier + 2個のRectangle専用modifier
 - [x] `@State`リアクティビティと自動再レンダリング
 - [x] 制約ベースのレイアウトエンジン
 - [x] 最小diff基盤のツリー再調整
@@ -319,7 +320,7 @@ SkiaUIは初期開発段階です。
 
 ### ロードマップ
 
-- [ ] ScrollView / List
+- [ ] List
 - [ ] アニメーションシステム
 - [ ] 画像サポート
 - [ ] キーボード / フォーカス管理

@@ -172,10 +172,10 @@ SkiaUI (umbrella)
 SkiaUIDSL           -> [SkiaUIElement, SkiaUIText]
   View protocol, @ViewBuilder, PrimitiveView protocol
   Primitives:   Text, Rectangle, Spacer, EmptyView
-  Containers:   VStack, HStack, ZStack
+  Containers:   VStack, HStack, ZStack, ScrollView
   Modifiers:    padding, frame, background, foregroundColor, font,
                 onTapGesture, accessibilityLabel/Role/Hint/Hidden
-  Types:        Color, Alignment, EdgeInsets, Rect
+  Types:        Color, Alignment, EdgeInsets, Rect, Axis
   AnyView, ConditionalView, TupleView2, ViewToElementConverter
 
 SkiaUIElement       -> (no deps)
@@ -185,14 +185,14 @@ SkiaUIText          -> (no deps)
   FontDescriptor, FontWeight, TextStyle, ParagraphSpec
 
 SkiaUIState         -> (no deps)
-  @State, Binding, StateStorage, Environment, Scheduler
+  @State, Binding, StateStorage, ScrollOffsetStorage, Environment, Scheduler
 
 SkiaUIReconciler    -> [SkiaUIElement]
   Reconciler, Patch, ElementPath, DirtyTracker
 
 SkiaUILayout        -> [SkiaUIElement]
   LayoutEngine, LayoutNode, Constraints
-  LayoutStrategy protocol, VStackLayout, HStackLayout, ZStackLayout
+  LayoutStrategy protocol, VStackLayout, HStackLayout, ZStackLayout, ScrollViewLayout
 
 SkiaUIRenderTree    -> [SkiaUIElement, SkiaUILayout, SkiaUIDisplayList]
   RenderNode, RenderTreeBuilder, DisplayListBuilder
@@ -382,6 +382,7 @@ Uses `buildPartialBlock` (SE-0348) for unlimited children support. `TupleView2` 
 | `VStack(alignment:spacing:)` | Vertical layout (alignment: `.leading`, `.center`, `.trailing`) |
 | `HStack(alignment:spacing:)` | Horizontal layout (alignment: `.top`, `.center`, `.bottom`) |
 | `ZStack(alignment:)` | Overlay/layered layout (9-point alignment) |
+| `ScrollView(_:)` | Scrollable container (`.vertical` or `.horizontal`) |
 
 ### View modifiers
 
@@ -458,7 +459,7 @@ SkiaUI/
       ViewToElement.swift      View -> Element conversion
       PrimitiveView.swift      PrimitiveView protocol
       Primitives/              Text, Rectangle, Spacer, EmptyView
-      Containers/              VStack, HStack, ZStack
+      Containers/              VStack, HStack, ZStack, ScrollView
       Modifiers/               8 files (padding, frame, background, foreground,
                                font, onTap, accessibility, modifiedContent)
       Types/                   Color, Alignment, EdgeInsets, Rect
@@ -489,6 +490,7 @@ SkiaUI/
     SkiaUIReconcilerTests/     Diff/patch tests
     SkiaUIDisplayListTests/    Encoding round-trip tests
     SkiaUISemanticsTests/      Accessibility tree tests
+    SkiaUIStateTests/          State management tests
     GoldenTests/               Visual regression test framework
   CLI/                         skui dev CLI (build, dev, test, lint)
 ```
@@ -507,7 +509,7 @@ SkiaUI/
 # Build all modules
 swift build
 
-# Run tests (49 tests across 7 suites)
+# Run tests (96 tests across 12 suites)
 swift test
 
 # Start the preview server (serves display list over HTTP on :3001)
@@ -525,8 +527,8 @@ SkiaUI is in early development. The current implementation covers:
 
 - [x] ResultBuilder DSL with `@ViewBuilder` (SE-0348 `buildPartialBlock`)
 - [x] 4 primitive views (`Text`, `Rectangle`, `Spacer`, `EmptyView`)
-- [x] 3 container views (`VStack`, `HStack`, `ZStack`)
-- [x] 10 view modifiers + 2 Rectangle-specific modifiers
+- [x] 4 container views (`VStack`, `HStack`, `ZStack`, `ScrollView`)
+- [x] 12 view modifiers + 2 Rectangle-specific modifiers
 - [x] `@State` reactivity with automatic re-rendering
 - [x] Constraint-based layout engine with pluggable `LayoutStrategy`
 - [x] Tree reconciliation with minimal diffing (`Patch`, `DirtyTracker`)
@@ -534,11 +536,11 @@ SkiaUI is in early development. The current implementation covers:
 - [x] CanvasKit web rendering via TypeScript host
 - [x] Tap/click event handling with z-order-correct hit testing
 - [x] Accessibility semantics tree (`SemanticsNode`, `SemanticsTreeBuilder`)
-- [x] 49 tests across 7 suites
+- [x] 96 tests across 12 suites
 
 ### Roadmap
 
-- [ ] ScrollView / List
+- [ ] List
 - [ ] Animation system
 - [ ] Image support
 - [ ] Keyboard / focus management

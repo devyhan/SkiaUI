@@ -77,15 +77,15 @@ graph TD
 | カテゴリ | 機能 | 状態 |
 | -------- | ---- | ---- |
 | **ビュー** | Text, Rectangle, Spacer, EmptyView | 完了 |
-| **コンテナ** | VStack, HStack, ZStack | 完了 |
+| **コンテナ** | VStack, HStack, ZStack, ScrollView | 完了 |
 | **Modifier** | padding, frame, background, foregroundColor, font, onTapGesture | 完了 |
 | **レイアウト** | ProposedSizeネゴシエーション、layoutPriority、fixedSize、フレキシブルフレーム (min/ideal/max) | 完了 |
 | **状態** | @State, Binding, 自動再レンダリング | 完了 |
 | **アクセシビリティ** | accessibilityLabel, accessibilityRole, accessibilityHint, accessibilityHidden | 完了 |
 | **レンダリング** | バイナリディスプレイリスト、CanvasKit再生、リテインドサブツリー | 完了 |
 | **Reconciler** | ツリーdiff、Patch、DirtyTracker | 完了 |
-| **テスト** | 8スイート、66テスト | 完了 |
-| **レンダリング** | ScrollView / List | 予定 |
+| **テスト** | 12スイート、96テスト | 完了 |
+| **レンダリング** | List | 予定 |
 | **レンダリング** | アニメーションシステム | 予定 |
 | **レンダリング** | 画像サポート | 予定 |
 | **プラットフォーム** | ネイティブSkiaバックエンド (Metal / Vulkan) | 予定 |

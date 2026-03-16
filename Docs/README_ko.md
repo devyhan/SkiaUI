@@ -77,15 +77,15 @@ graph TD
 | 카테고리 | 기능 | 상태 |
 | -------- | ---- | ---- |
 | **뷰** | Text, Rectangle, Spacer, EmptyView | 완료 |
-| **컨테이너** | VStack, HStack, ZStack | 완료 |
+| **컨테이너** | VStack, HStack, ZStack, ScrollView | 완료 |
 | **Modifier** | padding, frame, background, foregroundColor, font, onTapGesture | 완료 |
 | **레이아웃** | ProposedSize 협상, layoutPriority, fixedSize, 유연 프레임 (min/ideal/max) | 완료 |
 | **상태** | @State, Binding, 자동 재렌더링 | 완료 |
 | **접근성** | accessibilityLabel, accessibilityRole, accessibilityHint, accessibilityHidden | 완료 |
 | **렌더링** | 바이너리 디스플레이 리스트, CanvasKit 재생, 리테인드 서브트리 | 완료 |
 | **Reconciler** | 트리 diff, Patch, DirtyTracker | 완료 |
-| **테스트** | 8개 스위트, 66개 테스트 | 완료 |
-| **렌더링** | ScrollView / List | 예정 |
+| **테스트** | 12개 스위트, 96개 테스트 | 완료 |
+| **렌더링** | List | 예정 |
 | **렌더링** | 애니메이션 시스템 | 예정 |
 | **렌더링** | 이미지 지원 | 예정 |
 | **플랫폼** | 네이티브 Skia 백엔드 (Metal / Vulkan) | 예정 |

@@ -172,11 +172,11 @@ SkiaUI (umbrella)
 SkiaUIDSL           -> [SkiaUIElement, SkiaUIText]
   View 프로토콜, @ViewBuilder, PrimitiveView 프로토콜
   Primitives:   Text, Rectangle, Spacer, EmptyView
-  Containers:   VStack, HStack, ZStack
+  Containers:   VStack, HStack, ZStack, ScrollView
   Modifiers:    padding, frame, background, foregroundColor, font,
                 onTapGesture, layoutPriority, fixedSize,
                 accessibilityLabel/Role/Hint/Hidden
-  Types:        Color, Alignment, EdgeInsets, Rect
+  Types:        Color, Alignment, EdgeInsets, Rect, Axis
   AnyView, ConditionalView, TupleView2, ViewToElementConverter
 
 SkiaUIElement       -> (의존성 없음)
@@ -186,14 +186,14 @@ SkiaUIText          -> (의존성 없음)
   FontDescriptor, FontWeight, TextStyle, ParagraphSpec
 
 SkiaUIState         -> (의존성 없음)
-  @State, Binding, StateStorage, Environment, Scheduler
+  @State, Binding, StateStorage, ScrollOffsetStorage, Environment, Scheduler
 
 SkiaUIReconciler    -> [SkiaUIElement]
   Reconciler, Patch, ElementPath, DirtyTracker
 
 SkiaUILayout        -> [SkiaUIElement]
   LayoutEngine, LayoutNode, ProposedSize, Constraints
-  LayoutStrategy 프로토콜, VStackLayout, HStackLayout, ZStackLayout
+  LayoutStrategy 프로토콜, VStackLayout, HStackLayout, ZStackLayout, ScrollViewLayout
 
 SkiaUIRenderTree    -> [SkiaUIElement, SkiaUILayout, SkiaUIDisplayList]
   RenderNode, RenderTreeBuilder, DisplayListBuilder
@@ -396,6 +396,7 @@ public struct ViewBuilder {
 | `VStack(alignment:spacing:)` | 수직 레이아웃 (정렬: `.leading`, `.center`, `.trailing`) |
 | `HStack(alignment:spacing:)` | 수평 레이아웃 (정렬: `.top`, `.center`, `.bottom`) |
 | `ZStack(alignment:)` | 오버레이/레이어 레이아웃 (9포인트 정렬) |
+| `ScrollView(_:)` | 스크롤 가능 컨테이너 (`.vertical` 또는 `.horizontal`) |
 
 ### View modifier
 
@@ -475,7 +476,7 @@ SkiaUI/
       ViewToElement.swift      View -> Element 변환
       PrimitiveView.swift      PrimitiveView 프로토콜
       Primitives/              Text, Rectangle, Spacer, EmptyView
-      Containers/              VStack, HStack, ZStack
+      Containers/              VStack, HStack, ZStack, ScrollView
       Modifiers/               8개 파일 (padding, frame, background, foreground,
                                font, onTap, accessibility, modifiedContent)
       Types/                   Color, Alignment, EdgeInsets, Rect
@@ -506,6 +507,7 @@ SkiaUI/
     SkiaUIReconcilerTests/     Diff/patch 테스트
     SkiaUIDisplayListTests/    인코딩 라운드트립 테스트
     SkiaUISemanticsTests/      접근성 트리 테스트
+    SkiaUIStateTests/          상태 관리 테스트
     GoldenTests/               비주얼 회귀 테스트 프레임워크
   CLI/                         skui 개발 CLI (build, dev, test, lint)
 ```
@@ -524,7 +526,7 @@ SkiaUI/
 # 전체 모듈 빌드
 swift build
 
-# 테스트 실행 (8개 스위트, 66개 테스트)
+# 테스트 실행 (12개 스위트, 96개 테스트)
 swift test
 
 # 프리뷰 서버 시작 (HTTP :3001에서 디스플레이 리스트 제공)
@@ -542,7 +544,7 @@ SkiaUI는 초기 개발 단계입니다. 현재 구현 범위:
 
 - [x] `@ViewBuilder` 기반 ResultBuilder DSL (SE-0348 `buildPartialBlock`)
 - [x] 4개 primitive 뷰 (`Text`, `Rectangle`, `Spacer`, `EmptyView`)
-- [x] 3개 container 뷰 (`VStack`, `HStack`, `ZStack`)
+- [x] 4개 container 뷰 (`VStack`, `HStack`, `ZStack`, `ScrollView`)
 - [x] 12개 view modifier + 2개 Rectangle 전용 modifier
 - [x] `@State` 반응성 및 자동 재렌더링
 - [x] SwiftUI 호환 ProposedSize 기반 레이아웃 엔진 (우선순위+유연성 공간 분배)
@@ -552,11 +554,11 @@ SkiaUI는 초기 개발 단계입니다. 현재 구현 범위:
 - [x] TypeScript 호스트를 통한 CanvasKit 웹 렌더링
 - [x] Z-order 정확한 히트 테스트 기반 탭/클릭 이벤트 처리
 - [x] 접근성 시맨틱스 트리 (`SemanticsNode`, `SemanticsTreeBuilder`)
-- [x] 8개 스위트, 66개 테스트
+- [x] 12개 스위트, 96개 테스트
 
 ### 로드맵
 
-- [ ] ScrollView / List
+- [ ] List
 - [ ] 애니메이션 시스템
 - [ ] 이미지 지원
 - [ ] 키보드 / 포커스 관리

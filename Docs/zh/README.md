@@ -172,7 +172,7 @@ SkiaUI (umbrella)
 SkiaUIDSL           -> [SkiaUIElement, SkiaUIText]
   View协议、@ViewBuilder、PrimitiveView协议
   Primitives:   Text, Rectangle, Spacer, EmptyView
-  Containers:   VStack, HStack, ZStack
+  Containers:   VStack, HStack, ZStack, ScrollView
   Modifiers:    padding, frame, background, foregroundColor, font,
                 onTapGesture, accessibilityLabel/Role/Hint/Hidden
 ```
@@ -245,6 +245,7 @@ public protocol LayoutStrategy: Sendable {
 | `VStack(alignment:spacing:)` | 垂直布局 |
 | `HStack(alignment:spacing:)` | 水平布局 |
 | `ZStack(alignment:)` | 叠加/层叠布局 |
+| `ScrollView(_:)` | 可滚动容器（`.vertical`或`.horizontal`） |
 
 ### View modifier
 
@@ -301,8 +302,8 @@ SkiaUI处于早期开发阶段。
 
 - [x] 基于`@ViewBuilder`的ResultBuilder DSL
 - [x] 4个基本视图
-- [x] 3个容器视图
-- [x] 10个view modifier + 2个Rectangle专用modifier
+- [x] 4个容器视图（`VStack`、`HStack`、`ZStack`、`ScrollView`）
+- [x] 12个view modifier + 2个Rectangle专用modifier
 - [x] `@State`响应性与自动重新渲染
 - [x] 基于约束的布局引擎
 - [x] 基于最小diff的树协调
@@ -313,7 +314,7 @@ SkiaUI处于早期开发阶段。
 
 ### 路线图
 
-- [ ] ScrollView / List
+- [ ] List
 - [ ] 动画系统
 - [ ] 图片支持
 - [ ] 键盘 / 焦点管理

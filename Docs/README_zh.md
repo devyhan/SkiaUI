@@ -77,15 +77,15 @@ graph TD
 | 类别 | 功能 | 状态 |
 | ---- | ---- | ---- |
 | **视图** | Text, Rectangle, Spacer, EmptyView | 完成 |
-| **容器** | VStack, HStack, ZStack | 完成 |
+| **容器** | VStack, HStack, ZStack, ScrollView | 完成 |
 | **Modifier** | padding, frame, background, foregroundColor, font, onTapGesture | 完成 |
 | **布局** | ProposedSize协商、layoutPriority、fixedSize、弹性框架 (min/ideal/max) | 完成 |
 | **状态** | @State, Binding, 自动重新渲染 | 完成 |
 | **无障碍** | accessibilityLabel, accessibilityRole, accessibilityHint, accessibilityHidden | 完成 |
 | **渲染** | 二进制显示列表、CanvasKit回放、保留子树 | 完成 |
 | **Reconciler** | 树diff、Patch、DirtyTracker | 完成 |
-| **测试** | 8个套件、66个测试 | 完成 |
-| **渲染** | ScrollView / List | 计划中 |
+| **测试** | 12个套件、96个测试 | 完成 |
+| **渲染** | List | 计划中 |
 | **渲染** | 动画系统 | 计划中 |
 | **渲染** | 图片支持 | 计划中 |
 | **平台** | 原生Skia后端 (Metal / Vulkan) | 计划中 |

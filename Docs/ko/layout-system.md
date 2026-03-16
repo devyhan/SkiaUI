@@ -245,6 +245,7 @@ VStackLayout.layout(children, proposal, measure)
 | `VStackLayout` | StackLayout.swift | 세로 (height) | leading/center/trailing |
 | `HStackLayout` | StackLayout.swift | 가로 (width) | top/center/bottom |
 | `ZStackLayout` | ZStackLayout.swift | 없음 (겹침) | 9방향 정렬 |
+| `ScrollViewLayout` | ScrollViewLayout.swift | 스크롤 축 무제한 | 교차축 제약 유지 |
 
 ---
 
@@ -995,6 +996,7 @@ Sources/SkiaUILayout/
   ├── LayoutEngine.swift        재귀적 레이아웃 해석기 (핵심)
   ├── StackLayout.swift         VStackLayout, HStackLayout (우선순위 분배)
   ├── ZStackLayout.swift        ZStackLayout (겹침 정렬)
+  ├── ScrollViewLayout.swift    ScrollViewLayout (스크롤 축 무제한)
   └── LayoutNode.swift          레이아웃 결과 (위치+크기 트리)
 
 Sources/SkiaUIElement/
