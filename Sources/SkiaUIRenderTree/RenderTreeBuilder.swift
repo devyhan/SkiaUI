@@ -7,11 +7,11 @@ import SkiaUILayout
 public struct RenderTreeBuilder: Sendable {
     public init() {}
 
-    public func build(element: Element, layout: LayoutNode) -> RenderNode {
-        return buildNode(element: element, layout: layout, inheritedColor: 0xFF000000)
+    public func build(element: Element, layout: LayoutNode, scrollOffsets: [Int: Float] = [:]) -> RenderNode {
+        return buildNode(element: element, layout: layout, inheritedColor: 0xFF000000, scrollOffsets: scrollOffsets)
     }
 
-    private func buildNode(element: Element, layout: LayoutNode, inheritedColor: UInt32) -> RenderNode {
+    private func buildNode(element: Element, layout: LayoutNode, inheritedColor: UInt32, scrollOffsets: [Int: Float] = [:]) -> RenderNode {
         switch element {
         case .empty:
             return RenderNode(frame: (layout.x, layout.y, layout.width, layout.height))
@@ -37,9 +37,22 @@ public struct RenderTreeBuilder: Sendable {
         case .spacer:
             return RenderNode(frame: (layout.x, layout.y, layout.width, layout.height))
 
-        case .container(_, let children):
+        case .container(let props, let children):
             let childNodes = zip(children, layout.children).map { (childEl, childLayout) in
-                buildNode(element: childEl, layout: childLayout, inheritedColor: inheritedColor)
+                buildNode(element: childEl, layout: childLayout, inheritedColor: inheritedColor, scrollOffsets: scrollOffsets)
+            }
+            if case .scroll(let axis, let scrollID) = props.layout {
+                let offset = scrollOffsets[scrollID] ?? 0
+                let scrollOff: (x: Float, y: Float) = switch axis {
+                case .vertical:   (0, -offset)
+                case .horizontal: (-offset, 0)
+                }
+                return RenderNode(
+                    frame: (layout.x, layout.y, layout.width, layout.height),
+                    children: childNodes,
+                    clipToBounds: true,
+                    scrollOffset: scrollOff
+                )
             }
             return RenderNode(
                 frame: (layout.x, layout.y, layout.width, layout.height),
@@ -47,16 +60,16 @@ public struct RenderTreeBuilder: Sendable {
             )
 
         case .modified(let inner, let modifier):
-            return buildModified(inner: inner, modifier: modifier, layout: layout, inheritedColor: inheritedColor)
+            return buildModified(inner: inner, modifier: modifier, layout: layout, inheritedColor: inheritedColor, scrollOffsets: scrollOffsets)
         }
     }
 
-    private func buildModified(inner: Element, modifier: Element.Modifier, layout: LayoutNode, inheritedColor: UInt32) -> RenderNode {
+    private func buildModified(inner: Element, modifier: Element.Modifier, layout: LayoutNode, inheritedColor: UInt32, scrollOffsets: [Int: Float] = [:]) -> RenderNode {
         var color = inheritedColor
 
         switch modifier {
         case .background(let bgColor):
-            let innerNode = buildNode(element: inner, layout: layout, inheritedColor: color)
+            let innerNode = buildNode(element: inner, layout: layout, inheritedColor: color, scrollOffsets: scrollOffsets)
             let bgRect = RenderNode(
                 frame: (0, 0, innerNode.frame.width, innerNode.frame.height),
                 paintStyle: PaintStyle(fillColor: bgColor.uint32)
@@ -70,16 +83,16 @@ public struct RenderTreeBuilder: Sendable {
 
         case .foregroundColor(let fgColor):
             color = fgColor.uint32
-            return buildNode(element: inner, layout: layout, inheritedColor: color)
+            return buildNode(element: inner, layout: layout, inheritedColor: color, scrollOffsets: scrollOffsets)
 
         case .font(let size, let weight):
-            let node = buildNode(element: inner, layout: layout, inheritedColor: color)
+            let node = buildNode(element: inner, layout: layout, inheritedColor: color, scrollOffsets: scrollOffsets)
             applyFont(to: node, size: size, weight: weight)
             return node
 
         case .padding, .frame:
             let innerLayout = layout.children.first ?? layout
-            let innerNode = buildNode(element: inner, layout: innerLayout, inheritedColor: color)
+            let innerNode = buildNode(element: inner, layout: innerLayout, inheritedColor: color, scrollOffsets: scrollOffsets)
             return RenderNode(
                 frame: (layout.x, layout.y, layout.width, layout.height),
                 children: [innerNode]
@@ -87,7 +100,7 @@ public struct RenderTreeBuilder: Sendable {
 
         case .onTap, .accessibilityLabel, .accessibilityRole, .accessibilityHint, .accessibilityHidden,
              .layoutPriority, .fixedSize:
-            return buildNode(element: inner, layout: layout, inheritedColor: color)
+            return buildNode(element: inner, layout: layout, inheritedColor: color, scrollOffsets: scrollOffsets)
         }
     }
 

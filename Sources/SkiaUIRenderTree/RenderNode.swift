@@ -9,19 +9,22 @@ public final class RenderNode: @unchecked Sendable {
     public var textContent: TextContent?
     public var children: [RenderNode]
     public var clipToBounds: Bool
+    public var scrollOffset: (x: Float, y: Float)?
 
     public init(
         frame: (x: Float, y: Float, width: Float, height: Float) = (0, 0, 0, 0),
         paintStyle: PaintStyle? = nil,
         textContent: TextContent? = nil,
         children: [RenderNode] = [],
-        clipToBounds: Bool = false
+        clipToBounds: Bool = false,
+        scrollOffset: (x: Float, y: Float)? = nil
     ) {
         self.frame = frame
         self.paintStyle = paintStyle
         self.textContent = textContent
         self.children = children
         self.clipToBounds = clipToBounds
+        self.scrollOffset = scrollOffset
     }
 }
 

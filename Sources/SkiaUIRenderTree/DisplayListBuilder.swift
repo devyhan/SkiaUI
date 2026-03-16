@@ -24,6 +24,10 @@ public struct DisplayListBuilder: Sendable {
             list.append(.clipRect(x: 0, y: 0, width: w, height: h))
         }
 
+        if let scroll = node.scrollOffset, (scroll.x != 0 || scroll.y != 0) {
+            list.append(.translate(x: scroll.x, y: scroll.y))
+        }
+
         // Draw background/fill
         if let paint = node.paintStyle, let color = paint.fillColor {
             if paint.cornerRadius > 0 {
