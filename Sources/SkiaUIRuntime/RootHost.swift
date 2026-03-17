@@ -53,6 +53,7 @@ public final class RootHost: @unchecked Sendable {
         // allowing scroll offsets to persist across re-renders.
         resetScrollIDCounter()
         context.stateStorage.resetSlotCounter()
+        context.resetTapState()
 
         // Register dependency recording callbacks
         let graph = self.attributeGraph

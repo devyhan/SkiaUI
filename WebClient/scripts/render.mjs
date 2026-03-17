@@ -112,6 +112,8 @@ function play(ck, buffer, canvas, typeface) {
         if (familyLen > 0) {
           offset += familyLen; // skip fontFamily bytes (not used in offline renderer)
         }
+        readInt32(); // lineLimit
+        readInt32(); // lineBreakMode
         setColor(color);
 
         const font = new ck.Font(typeface, fontSize);

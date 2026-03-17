@@ -98,6 +98,8 @@ export function play(ck, buffer, canvas, typeface) {
         if (familyLen > 0) {
           offset += familyLen;
         }
+        readInt32(); // lineLimit
+        readInt32(); // lineBreakMode
         setColor(color);
 
         const font = new ck.Font(typeface, fontSize);

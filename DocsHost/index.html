@@ -44,17 +44,25 @@
     window.skiaUI = {
       viewport: { width: canvas.width, height: canvas.height },
       submitDisplayList(bytes) {
-        const buf = bytes.buffer ?? bytes;
-        skCanvas.clear(CanvasKit.Color4f(0.95, 0.95, 0.95, 1.0));
-        play(CanvasKit, buf, skCanvas, typeface);
-        surface.flush();
+        try {
+          const buf = bytes.buffer ?? bytes;
+          skCanvas.clear(CanvasKit.Color4f(0.95, 0.95, 0.95, 1.0));
+          play(CanvasKit, buf, skCanvas, typeface);
+          surface.flush();
+        } catch (err) {
+          console.error("[SkiaUI] submitDisplayList error:", err);
+        }
       },
     };
 
     // Forward click events to Swift tap handler
     canvas.addEventListener("click", (e) => {
       if (typeof window.skiaUI.handleTap === "function") {
-        window.skiaUI.handleTap(e.offsetX, e.offsetY);
+        try {
+          window.skiaUI.handleTap(e.offsetX, e.offsetY);
+        } catch (err) {
+          console.error("[SkiaUI] handleTap error:", err);
+        }
       }
     });
 
