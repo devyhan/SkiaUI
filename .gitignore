@@ -10,9 +10,6 @@ DerivedData/
 node_modules/
 dist/
 
-# CLI build
-CLI/.build/
-
 # Goldens output
 Goldens/output/
 

@@ -11,6 +11,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", exact: "0.47.1"),
+        .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.5.0"),
     ],
     targets: [
         // MARK: - Core Types
@@ -118,6 +119,15 @@ let package = Package(
         .executableTarget(
             name: "SkiaUIDocsSite",
             dependencies: ["SkiaUI", "SkiaUIWebBridge"]
+        ),
+
+        // MARK: - CLI (user-facing WASM workflow tool)
+        .executableTarget(
+            name: "skiaui-cli",
+            dependencies: [
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ],
+            path: "Sources/SkiaUICLI"
         ),
 
         // MARK: - Tests
