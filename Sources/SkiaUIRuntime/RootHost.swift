@@ -127,6 +127,9 @@ public final class RootHost: @unchecked Sendable {
         let renderTreeBuilder = RenderTreeBuilder(renderCache: renderCache)
         let renderNode = renderTreeBuilder.build(element: element, layout: layout, scrollOffsets: scrollOffsets)
 
+        // Reset retained cache so every subtree emits full draw commands.
+        // The JS display list player is stateless and cannot replay cached subtrees.
+        retainedCache = RetainedSubtreeCache()
         var displayListBuilder = DisplayListBuilder(retainedCache: retainedCache)
         let displayList = displayListBuilder.build(from: renderNode)
         retainedCache = displayListBuilder.retainedCache
