@@ -10,9 +10,7 @@ public final class DependencyRecorder: @unchecked Sendable {
     private var _onStateRead: ((Int) -> Void)?
     private var _onStateWrite: ((Int) -> Void)?
 
-    /// Creates a new recorder. Use `.shared` for production.
-    /// Visible for `@testable import` unit tests.
-    internal init() {}
+    public init() {}
 
     public func setCallbacks(
         onRead: @escaping (Int) -> Void,

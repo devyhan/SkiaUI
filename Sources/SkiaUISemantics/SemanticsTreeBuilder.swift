@@ -35,6 +35,9 @@ public struct SemanticsTreeBuilder: Sendable {
         case .spacer:
             return SemanticsNode(id: id, role: .none, frame: frame, isHidden: true)
 
+        case .image(let props):
+            return SemanticsNode(id: id, role: .image, label: props.source.sourceString, frame: frame)
+
         case .container(_, let children):
             var childNodes: [SemanticsNode] = []
             for (i, child) in children.enumerated() {
@@ -59,6 +62,10 @@ public struct SemanticsTreeBuilder: Sendable {
         case .onTap:
             node.role = .button
             node.actions.append(.tap)
+        case .onLongPress:
+            node.actions.append(.longPress)
+        case .onDrag:
+            break
         case .accessibilityLabel(let label):
             node.label = label
         case .accessibilityRole(let role):

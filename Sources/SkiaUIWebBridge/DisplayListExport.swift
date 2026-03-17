@@ -9,13 +9,11 @@ public struct DisplayListExport {
     public static func exportToJS(_ displayList: DisplayList) {
         let encoder = CommandEncoder()
         let bytes = encoder.encode(displayList)
-        // Convert to JS Uint8Array and call submitDisplayList
-        let jsArray = JSObject.global.Uint8Array.function!.new(bytes.count)
-        for (i, byte) in bytes.enumerated() {
-            jsArray[i] = .number(Double(byte))
+        // Bulk transfer via JSTypedArray (O(1) copy instead of O(n) element-by-element)
+        bytes.withUnsafeBufferPointer { buffer in
+            let jsArray = JSTypedArray<UInt8>(buffer)
+            JSObject.global.skiaUI.submitDisplayList.function!(jsArray.jsValue)
         }
-        let buffer = jsArray.buffer
-        JSObject.global.skiaUI.submitDisplayList.function!(buffer)
     }
 }
 #else

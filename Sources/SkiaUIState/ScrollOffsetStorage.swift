@@ -11,7 +11,7 @@ public final class ScrollOffsetStorage: @unchecked Sendable {
     private var viewportSizes: [Int: Float] = [:]
     private let lock = NSLock()
 
-    private init() {}
+    public init() {}
 
     public func getOffset(id: Int) -> Float {
         lock.lock()

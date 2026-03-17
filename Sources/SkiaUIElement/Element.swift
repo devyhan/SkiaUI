@@ -6,16 +6,31 @@ public indirect enum Element: Hashable, Sendable {
     case text(String, TextProperties)
     case rectangle(RectangleProperties)
     case spacer(minLength: Float?)
+    case image(ImageProperties)
     case container(ContainerProperties, children: [Element])
     case modified(Element, Modifier)
+
+    public enum LineBreakMode: Int, Hashable, Sendable {
+        case wordWrap = 0
+        case charWrap = 1
+        case truncateTail = 2
+    }
 
     public struct TextProperties: Hashable, Sendable {
         public var fontSize: Float
         public var fontWeight: Int
         public var foregroundColor: ElementColor?
         public var fontFamily: String?
-        public init(fontSize: Float = 14, fontWeight: Int = 400, foregroundColor: ElementColor? = nil, fontFamily: String? = nil) {
-            self.fontSize = fontSize; self.fontWeight = fontWeight; self.foregroundColor = foregroundColor; self.fontFamily = fontFamily
+        public var lineLimit: Int?
+        public var lineBreakMode: LineBreakMode
+        public init(
+            fontSize: Float = 14, fontWeight: Int = 400,
+            foregroundColor: ElementColor? = nil, fontFamily: String? = nil,
+            lineLimit: Int? = nil, lineBreakMode: LineBreakMode = .wordWrap
+        ) {
+            self.fontSize = fontSize; self.fontWeight = fontWeight
+            self.foregroundColor = foregroundColor; self.fontFamily = fontFamily
+            self.lineLimit = lineLimit; self.lineBreakMode = lineBreakMode
         }
     }
 
@@ -38,6 +53,32 @@ public indirect enum Element: Hashable, Sendable {
             let bi = UInt32(min(max(b, 0), 1) * 255)
             let ai = UInt32(min(max(a, 0), 1) * 255)
             return (ai << 24) | (ri << 16) | (gi << 8) | bi
+        }
+    }
+
+    public enum ImageSource: Hashable, Sendable {
+        case named(String)
+        case url(String)
+
+        public var sourceString: String {
+            switch self {
+            case .named(let name): return name
+            case .url(let url): return url
+            }
+        }
+    }
+
+    public enum ContentMode: Int, Hashable, Sendable {
+        case fit = 0
+        case fill = 1
+    }
+
+    public struct ImageProperties: Hashable, Sendable {
+        public var source: ImageSource
+        public var contentMode: ContentMode
+        public init(source: ImageSource, contentMode: ContentMode = .fit) {
+            self.source = source
+            self.contentMode = contentMode
         }
     }
 
@@ -95,6 +136,8 @@ public indirect enum Element: Hashable, Sendable {
         case foregroundColor(ElementColor)
         case font(size: Float, weight: Int, family: String? = nil)
         case onTap(id: Int)
+        case onLongPress(id: Int)
+        case onDrag(id: Int)
         case accessibilityLabel(String)
         case accessibilityRole(String)
         case accessibilityHint(String)

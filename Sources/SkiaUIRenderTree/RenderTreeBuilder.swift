@@ -14,7 +14,16 @@ public struct RenderTreeBuilder: Sendable {
     public func build(element: Element, layout: LayoutNode, scrollOffsets: [Int: Float] = [:]) -> RenderNode {
         let node = buildNode(element: element, layout: layout, inheritedColor: 0xFF000000, scrollOffsets: scrollOffsets, pathIndex: 0)
         node.subtreeID = 0
+        node.subtreeVersion = Self.computeVersion(element: element, layout: layout)
         return node
+    }
+
+    /// Compute a content-based version hash for retained subtree caching.
+    private static func computeVersion(element: Element, layout: LayoutNode) -> Int {
+        var hasher = Hasher()
+        hasher.combine(element)
+        hasher.combine(layout)
+        return hasher.finalize()
     }
 
     private func buildNode(element: Element, layout: LayoutNode, inheritedColor: UInt32, scrollOffsets: [Int: Float] = [:], pathIndex: Int = 0) -> RenderNode {
@@ -31,7 +40,9 @@ public struct RenderTreeBuilder: Sendable {
                     fontSize: props.fontSize,
                     fontWeight: props.fontWeight,
                     color: color,
-                    fontFamily: props.fontFamily
+                    fontFamily: props.fontFamily,
+                    lineLimit: props.lineLimit,
+                    lineBreakMode: props.lineBreakMode.rawValue
                 )
             )
 
@@ -44,12 +55,22 @@ public struct RenderTreeBuilder: Sendable {
         case .spacer:
             return RenderNode(frame: (layout.x, layout.y, layout.width, layout.height))
 
+        case .image(let props):
+            return RenderNode(
+                frame: (layout.x, layout.y, layout.width, layout.height),
+                imageContent: ImageContent(
+                    source: props.source.sourceString,
+                    contentMode: props.contentMode.rawValue
+                )
+            )
+
         case .container(let props, let children):
             let childNodes = zip(children, layout.children).enumerated().map { (i, pair) in
                 let (childEl, childLayout) = pair
                 let childID = (pathIndex &* 31 &+ (i + 1)) & 0x7FFFFFFF
                 let node = buildNode(element: childEl, layout: childLayout, inheritedColor: inheritedColor, scrollOffsets: scrollOffsets, pathIndex: childID)
                 node.subtreeID = childID
+                node.subtreeVersion = Self.computeVersion(element: childEl, layout: childLayout)
                 return node
             }
             if case .scroll(let axis, let scrollID) = props.layout {
@@ -119,7 +140,8 @@ public struct RenderTreeBuilder: Sendable {
             renderCache.set(id: cacheID, element: .modified(inner, modifier), layout: layout, node: node)
             return node
 
-        case .onTap, .accessibilityLabel, .accessibilityRole, .accessibilityHint, .accessibilityHidden,
+        case .onTap, .onLongPress, .onDrag,
+             .accessibilityLabel, .accessibilityRole, .accessibilityHint, .accessibilityHidden,
              .layoutPriority, .fixedSize:
             return buildNode(element: inner, layout: layout, inheritedColor: color, scrollOffsets: scrollOffsets, pathIndex: pathIndex)
         }

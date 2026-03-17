@@ -22,6 +22,8 @@ public struct TreeInspector: Sendable {
         case .spacer(let minLength):
             let minStr: String = minLength.map { String(describing: $0) } ?? "nil"
             lines.append("\(prefix)Spacer(min: \(minStr))")
+        case .image(let props):
+            lines.append("\(prefix)Image(source: \(props.source.sourceString), mode: \(props.contentMode))")
         case .container(let props, let children):
             let layoutDesc: String
             switch props.layout {

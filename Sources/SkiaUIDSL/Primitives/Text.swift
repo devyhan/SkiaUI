@@ -9,6 +9,8 @@ public struct Text: PrimitiveView {
     var _fontWeight: Int = 400
     var _foregroundColor: Element.ElementColor?
     var _fontFamily: String?
+    var _lineLimit: Int?
+    var _lineBreakMode: Element.LineBreakMode = .wordWrap
 
     public init(_ content: String) {
         self.content = content
@@ -19,7 +21,9 @@ public struct Text: PrimitiveView {
             fontSize: _fontSize,
             fontWeight: _fontWeight,
             foregroundColor: _foregroundColor,
-            fontFamily: _fontFamily
+            fontFamily: _fontFamily,
+            lineLimit: _lineLimit,
+            lineBreakMode: _lineBreakMode
         ))
     }
 }
@@ -57,6 +61,20 @@ extension Text {
     public func fontFamily(_ family: String) -> Text {
         var copy = self
         copy._fontFamily = family
+        return copy
+    }
+
+    /// Sets the maximum number of lines for this text view.
+    public func lineLimit(_ limit: Int?) -> Text {
+        var copy = self
+        copy._lineLimit = limit
+        return copy
+    }
+
+    /// Sets the line break mode for this text view.
+    public func lineBreakMode(_ mode: Element.LineBreakMode) -> Text {
+        var copy = self
+        copy._lineBreakMode = mode
         return copy
     }
 }

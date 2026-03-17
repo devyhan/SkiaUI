@@ -5,8 +5,11 @@ import SkiaUIElement
 
 public struct LayoutEngine: Sendable {
     private let cache = LayoutCache()
+    private let textMeasurer: any TextMeasurer
 
-    public init() {}
+    public init(textMeasurer: any TextMeasurer = EstimatedTextMeasurer()) {
+        self.textMeasurer = textMeasurer
+    }
 
     public func clearCache() {
         cache.clear()
@@ -38,21 +41,25 @@ public struct LayoutEngine: Sendable {
             return LayoutNode()
 
         case .text(let text, let props):
-            let charWidth = props.fontSize * 0.6
-            let estimatedWidth = charWidth * Float(text.count)
-            let height = props.fontSize * 1.2
-            // If proposal is nil, use ideal (intrinsic) size; otherwise constrain
+            let measurement = textMeasurer.measure(
+                text: text,
+                fontSize: props.fontSize,
+                fontWeight: props.fontWeight,
+                fontFamily: props.fontFamily,
+                maxWidth: proposal.width,
+                lineLimit: props.lineLimit
+            )
             let w: Float
             if let pw = proposal.width {
-                w = min(estimatedWidth, pw)
+                w = min(measurement.width, pw)
             } else {
-                w = estimatedWidth
+                w = measurement.width
             }
             let h: Float
             if let ph = proposal.height {
-                h = min(height, ph)
+                h = min(measurement.height, ph)
             } else {
-                h = height
+                h = measurement.height
             }
             return LayoutNode(width: max(0, w), height: max(0, h))
 
@@ -66,6 +73,12 @@ public struct LayoutEngine: Sendable {
             let minLen = minLength ?? 0
             let w = max(minLen, proposal.width ?? 0)
             let h = max(minLen, proposal.height ?? 0)
+            return LayoutNode(width: w, height: h)
+
+        case .image:
+            // Image uses proposed size if available, otherwise defaults to 100×100
+            let w = proposal.width ?? 100
+            let h = proposal.height ?? 100
             return LayoutNode(width: w, height: h)
 
         case .container(let props, let children):
@@ -154,7 +167,7 @@ public struct LayoutEngine: Sendable {
             )
             return layoutElement(element, proposal: p)
 
-        case .background, .foregroundColor, .onTap,
+        case .background, .foregroundColor, .onTap, .onLongPress, .onDrag,
              .accessibilityLabel, .accessibilityRole, .accessibilityHint, .accessibilityHidden,
              .drawingGroup:
             return layoutElement(element, proposal: proposal)

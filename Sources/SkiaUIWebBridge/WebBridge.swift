@@ -10,17 +10,16 @@ import SkiaUIDisplayList
 
 public struct WebBridge {
     public static func start<A: App>(_ appType: A.Type) {
+        let context = RenderContext()
         let app = A()
-        let host = RootHost()
+        let host = RootHost(context: context)
 
         host.setOnDisplayList { bytes in
-            // Convert bytes to JS Uint8Array and submit
-            let jsArray = JSObject.global.Uint8Array.function!.new(bytes.count)
-            for (i, byte) in bytes.enumerated() {
-                jsArray[i] = .number(Double(byte))
+            // Bulk transfer: create JSTypedArray directly from Swift [UInt8]
+            bytes.withUnsafeBufferPointer { buffer in
+                let jsArray = JSTypedArray<UInt8>(buffer)
+                JSObject.global.skiaUI.submitDisplayList.function!(jsArray.jsValue)
             }
-            let buffer = jsArray.buffer
-            JSObject.global.skiaUI.submitDisplayList.function!(buffer)
         }
 
         let viewport = JSObject.global.skiaUI.viewport
@@ -28,9 +27,30 @@ public struct WebBridge {
         let height = Float(viewport.height.number ?? 600)
         host.setViewport(width: width, height: height)
 
+        // Register tap handler bridge
+        JSObject.global.skiaUI.handleTap = .object(JSClosure { args in
+            if let tapID = args.first?.number.map({ Int($0) }) {
+                host.handleTap(id: tapID)
+            }
+            return .undefined
+        })
+
+        // Register scroll handler bridge
+        JSObject.global.skiaUI.handleScroll = .object(JSClosure { args in
+            guard args.count >= 4,
+                  let x = args[0].number.map({ Float($0) }),
+                  let y = args[1].number.map({ Float($0) }),
+                  let dx = args[2].number.map({ Float($0) }),
+                  let dy = args[3].number.map({ Float($0) }) else {
+                return .undefined
+            }
+            host.handleScroll(x: x, y: y, deltaX: dx, deltaY: dy)
+            return .undefined
+        })
+
         host.render(app.body)
 
-        StateStorage.shared.setOnDirty {
+        context.stateStorage.setOnDirty {
             host.render(app.body)
         }
     }

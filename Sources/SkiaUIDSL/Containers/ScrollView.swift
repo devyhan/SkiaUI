@@ -2,17 +2,12 @@
 // A view that provides scrollable content along a single axis.
 
 import SkiaUIElement
-import Foundation
-
-nonisolated(unsafe) var _nextScrollID = 0
-let _scrollLock = NSLock()
+import SkiaUIState
 
 /// Resets the scroll ID counter so that deterministic IDs are assigned each render cycle.
 /// Must be called before `ViewToElementConverter.convert()` to ensure stable scroll IDs.
 public func resetScrollIDCounter() {
-    _scrollLock.lock()
-    _nextScrollID = 0
-    _scrollLock.unlock()
+    RenderContext.active.resetScrollIDCounter()
 }
 
 public struct ScrollView<Content: View>: PrimitiveView {
@@ -25,10 +20,7 @@ public struct ScrollView<Content: View>: PrimitiveView {
     }
 
     public func asElement() -> Element {
-        _scrollLock.lock()
-        let id = _nextScrollID
-        _nextScrollID += 1
-        _scrollLock.unlock()
+        let id = RenderContext.active.nextScrollID()
 
         let children = collectChildren(from: content)
         let innerStack: Element = switch axis {

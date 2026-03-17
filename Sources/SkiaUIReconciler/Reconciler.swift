@@ -34,6 +34,11 @@ public struct Reconciler: Sendable {
                 patches.append(.update(path: path, from: old, to: new))
             }
 
+        case (.image(let oldProps), .image(let newProps)):
+            if oldProps != newProps {
+                patches.append(.update(path: path, from: old, to: new))
+            }
+
         case (.container(let oldProps, let oldChildren), .container(let newProps, let newChildren)):
             if oldProps != newProps {
                 patches.append(.update(path: path, from: old, to: new))

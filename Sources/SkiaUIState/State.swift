@@ -9,21 +9,23 @@ public struct State<Value: Sendable>: Sendable where Value: Equatable {
     private let initialValue: Value
 
     public init(wrappedValue: Value) {
-        self.id = StateStorage.shared.allocate(initialValue: wrappedValue)
+        self.id = RenderContext.active.stateStorage.allocate(initialValue: wrappedValue)
         self.initialValue = wrappedValue
     }
 
     public var wrappedValue: Value {
         get {
-            DependencyRecorder.shared.notifyRead(stateID: id)
-            return StateStorage.shared.get(id: id) ?? initialValue
+            let ctx = RenderContext.active
+            ctx.dependencyRecorder.notifyRead(stateID: id)
+            return ctx.stateStorage.get(id: id) ?? initialValue
         }
         nonmutating set {
-            let oldValue: Value? = StateStorage.shared.get(id: id)
+            let ctx = RenderContext.active
+            let oldValue: Value? = ctx.stateStorage.get(id: id)
             if oldValue != newValue {
-                StateStorage.shared.set(id: id, value: newValue)
-                DependencyRecorder.shared.notifyWrite(stateID: id)
-                StateStorage.shared.markDirty()
+                ctx.stateStorage.set(id: id, value: newValue)
+                ctx.dependencyRecorder.notifyWrite(stateID: id)
+                ctx.stateStorage.markDirty()
             }
         }
     }

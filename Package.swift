@@ -17,7 +17,7 @@ let package = Package(
         // MARK: - Core Types
         .target(
             name: "SkiaUIDSL",
-            dependencies: ["SkiaUIElement", "SkiaUIText"]
+            dependencies: ["SkiaUIElement", "SkiaUIText", "SkiaUIState"]
         ),
         .target(
             name: "SkiaUIText",
@@ -116,10 +116,10 @@ let package = Package(
             dependencies: ["SkiaUIDSL", "SkiaUIState", "SkiaUIRuntime"]
         ),
 
-        // MARK: - Preview (native executable for display list generation)
+        // MARK: - Docs Site (WASM demo app)
         .executableTarget(
-            name: "SkiaUIPreview",
-            dependencies: ["SkiaUI"]
+            name: "SkiaUIDocsSite",
+            dependencies: ["SkiaUI", "SkiaUIWebBridge"]
         ),
 
         // MARK: - Tests

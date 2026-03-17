@@ -54,9 +54,14 @@ public struct DisplayListBuilder: Sendable {
             }
         }
 
+        // Draw image
+        if let img = node.imageContent {
+            list.append(.drawImage(source: img.source, x: 0, y: 0, width: w, height: h, contentMode: img.contentMode))
+        }
+
         // Draw text
         if let text = node.textContent {
-            list.append(.drawText(text: text.text, x: 0, y: text.fontSize, fontSize: text.fontSize, fontWeight: text.fontWeight, color: text.color, boundsWidth: w, fontFamily: text.fontFamily))
+            list.append(.drawText(text: text.text, x: 0, y: text.fontSize, fontSize: text.fontSize, fontWeight: text.fontWeight, color: text.color, boundsWidth: w, fontFamily: text.fontFamily, lineLimit: text.lineLimit, lineBreakMode: text.lineBreakMode))
         }
 
         // Draw children

@@ -11,6 +11,7 @@ import SkiaUIDisplayList
 import SkiaUIRenderer
 
 public final class RootHost: @unchecked Sendable {
+    private let context: RenderContext
     private var currentElement: Element?
     private var currentLayout: LayoutNode?
     private let layoutEngine = LayoutEngine()
@@ -28,7 +29,9 @@ public final class RootHost: @unchecked Sendable {
     private var onDisplayList: (([UInt8]) -> Void)?
     private let attributeGraph = AttributeGraph()
 
-    public init() {}
+    public init(context: RenderContext = .default) {
+        self.context = context
+    }
 
     public func setViewport(width: Float, height: Float) {
         viewportWidth = width
@@ -40,16 +43,23 @@ public final class RootHost: @unchecked Sendable {
     }
 
     public func render<V: View>(_ view: V) {
+        context.activate {
+            renderInContext(view)
+        }
+    }
+
+    private func renderInContext<V: View>(_ view: V) {
         // Reset scroll ID counter so the same tree structure yields the same IDs,
         // allowing scroll offsets to persist across re-renders.
         resetScrollIDCounter()
-        StateStorage.shared.resetSlotCounter()
+        context.stateStorage.resetSlotCounter()
 
         // Register dependency recording callbacks
         let graph = self.attributeGraph
+
         var liveNodeIDs = Set<AttributeNodeID>()
 
-        DependencyRecorder.shared.setCallbacks(
+        context.dependencyRecorder.setCallbacks(
             onRead: { stateID in
                 graph.recordSourceRead(AttributeNodeID(sourcePath: [stateID]))
             },
@@ -78,7 +88,7 @@ public final class RootHost: @unchecked Sendable {
         graph.pruneDeadNodes(liveIDs: liveNodeIDs)
 
         // Phase 1: Reconciler early-return — skip entire pipeline if element tree unchanged
-        let scrollOffsets = ScrollOffsetStorage.shared.allOffsets()
+        let scrollOffsets = context.scrollOffsetStorage.allOffsets()
         let viewportChanged = viewportWidth != previousViewportWidth || viewportHeight != previousViewportHeight
         if let prev = previousElement {
             let patches = reconciler.diff(old: prev, new: element)
@@ -101,11 +111,9 @@ public final class RootHost: @unchecked Sendable {
             }
         }
 
-        // Phase 3: Clear per-frame caches before computing layout.
-        // The retained subtree cache must be cleared when the element tree changed,
-        // because subtreeVersion is always 0 and would falsely cache-hit otherwise.
-        layoutEngine.clearCache()
-        retainedCache.clear()
+        // Layout and retained subtree caches persist across frames.
+        // LayoutCache keys include (Element, ProposedSize) — changed elements get new keys.
+        // RetainedSubtreeCache uses content-based versioning — changed subtrees get new versions.
         var layout = layoutEngine.layout(element, proposal: ProposedSize(width: viewportWidth, height: viewportHeight))
 
         // Center content within viewport (matches SwiftUI root view behavior)
@@ -136,20 +144,70 @@ public final class RootHost: @unchecked Sendable {
     }
 
     public func handleScroll(x: Float, y: Float, deltaX: Float, deltaY: Float) {
-        guard let element = currentElement, let layout = currentLayout else { return }
-        if let hit = scrollHitTest(element: element, layout: layout, x: x, y: y, offsetX: 0, offsetY: 0) {
-            let delta: Float = switch hit.axis {
-            case .vertical:   deltaY
-            case .horizontal: deltaX
+        context.activate {
+            guard let element = currentElement, let layout = currentLayout else { return }
+            if let hit = scrollHitTest(element: element, layout: layout, x: x, y: y, offsetX: 0, offsetY: 0) {
+                let delta: Float = switch hit.axis {
+                case .vertical:   deltaY
+                case .horizontal: deltaX
+                }
+                context.scrollOffsetStorage.applyDelta(id: hit.scrollID, delta: delta)
+                context.stateStorage.markDirty()
             }
-            ScrollOffsetStorage.shared.applyDelta(id: hit.scrollID, delta: delta)
-            StateStorage.shared.markDirty()
+        }
+    }
+
+    public func handleTap(id: Int) {
+        context.activate {
+            context.tapHandlers[id]?()
+        }
+    }
+
+    public func handleLongPress(id: Int) {
+        context.activate {
+            context.longPressHandlers[id]?()
+        }
+    }
+
+    public func handleDrag(id: Int, value: DragValue) {
+        context.activate {
+            context.dragHandlers[id]?.onChanged(value)
+        }
+    }
+
+    public func handleDragEnd(id: Int, value: DragValue) {
+        context.activate {
+            context.dragHandlers[id]?.onEnded(value)
         }
     }
 
     public func hitTest(x: Float, y: Float) -> Int? {
-        guard let element = currentElement, let layout = currentLayout else { return nil }
-        return hitTestElement(element, layout: layout, x: x, y: y, offsetX: 0, offsetY: 0)
+        context.activate {
+            guard let element = currentElement, let layout = currentLayout else { return nil }
+            return hitTestElement(element, layout: layout, x: x, y: y, offsetX: 0, offsetY: 0)
+        }
+    }
+
+    /// Hit test for long press gesture modifiers.
+    public func hitTestLongPress(x: Float, y: Float) -> Int? {
+        context.activate {
+            guard let element = currentElement, let layout = currentLayout else { return nil }
+            return hitTestModifier(element, layout: layout, x: x, y: y, offsetX: 0, offsetY: 0) { modifier in
+                if case .onLongPress(let id) = modifier { return id }
+                return nil
+            }
+        }
+    }
+
+    /// Hit test for drag gesture modifiers.
+    public func hitTestDrag(x: Float, y: Float) -> Int? {
+        context.activate {
+            guard let element = currentElement, let layout = currentLayout else { return nil }
+            return hitTestModifier(element, layout: layout, x: x, y: y, offsetX: 0, offsetY: 0) { modifier in
+                if case .onDrag(let id) = modifier { return id }
+                return nil
+            }
+        }
     }
 
     private func hitTestElement(_ element: Element, layout: LayoutNode, x: Float, y: Float, offsetX: Float, offsetY: Float) -> Int? {
@@ -168,7 +226,7 @@ public final class RootHost: @unchecked Sendable {
             var childOffsetX = absX
             var childOffsetY = absY
             if case .scroll(let axis, let scrollID) = props.layout {
-                let offset = ScrollOffsetStorage.shared.getOffset(id: scrollID)
+                let offset = context.scrollOffsetStorage.getOffset(id: scrollID)
                 switch axis {
                 case .vertical:   childOffsetY -= offset
                 case .horizontal: childOffsetX -= offset
@@ -182,11 +240,6 @@ public final class RootHost: @unchecked Sendable {
                 }
             }
         case .modified(let inner, let modifier):
-            // Modifiers that add a layout wrapper (.padding, .frame) store
-            // the inner element's layout as their first child.
-            // Transparent modifiers (background, foregroundColor, onTap, font,
-            // accessibility) share the same layout node — pass original offset
-            // to avoid double-counting layout.x/y.
             let innerLayout: LayoutNode
             let nextOffsetX: Float
             let nextOffsetY: Float
@@ -219,11 +272,69 @@ public final class RootHost: @unchecked Sendable {
         return nil
     }
 
+    /// Generic hit test that matches any modifier using the provided extractor closure.
+    private func hitTestModifier(_ element: Element, layout: LayoutNode, x: Float, y: Float, offsetX: Float, offsetY: Float, extract: (Element.Modifier) -> Int?) -> Int? {
+        let absX = offsetX + layout.x
+        let absY = offsetY + layout.y
+
+        guard x >= absX && x <= absX + layout.width && y >= absY && y <= absY + layout.height else {
+            return nil
+        }
+
+        switch element {
+        case .container(let props, let children):
+            var childOffsetX = absX
+            var childOffsetY = absY
+            if case .scroll(let axis, let scrollID) = props.layout {
+                let offset = context.scrollOffsetStorage.getOffset(id: scrollID)
+                switch axis {
+                case .vertical:   childOffsetY -= offset
+                case .horizontal: childOffsetX -= offset
+                }
+            }
+            for (i, child) in children.enumerated().reversed() {
+                if i < layout.children.count {
+                    if let id = hitTestModifier(child, layout: layout.children[i], x: x, y: y, offsetX: childOffsetX, offsetY: childOffsetY, extract: extract) {
+                        return id
+                    }
+                }
+            }
+        case .modified(let inner, let modifier):
+            let innerLayout: LayoutNode
+            let nextOffsetX: Float
+            let nextOffsetY: Float
+            switch modifier {
+            case .padding, .frame:
+                innerLayout = layout.children.first ?? layout
+                nextOffsetX = absX
+                nextOffsetY = absY
+            default:
+                innerLayout = layout
+                nextOffsetX = offsetX
+                nextOffsetY = offsetY
+            }
+            if let id = hitTestModifier(inner, layout: innerLayout, x: x, y: y, offsetX: nextOffsetX, offsetY: nextOffsetY, extract: extract) {
+                return id
+            }
+            if let id = extract(modifier) {
+                return id
+            }
+        default:
+            break
+        }
+
+        if case .modified(_, let modifier) = element {
+            return extract(modifier)
+        }
+
+        return nil
+    }
+
     private func syncScrollMetrics(element: Element, layout: LayoutNode) {
         if case .container(let props, _) = element,
            case .scroll(let axis, let scrollID) = props.layout,
            let childLayout = layout.children.first {
-            let storage = ScrollOffsetStorage.shared
+            let storage = context.scrollOffsetStorage
             switch axis {
             case .vertical:
                 storage.setContentSize(id: scrollID, size: childLayout.height)
@@ -239,8 +350,6 @@ public final class RootHost: @unchecked Sendable {
                 syncScrollMetrics(element: child, layout: layout.children[i])
             }
         } else if case .modified(let inner, let modifier) = element {
-            // Only .padding and .frame wrap the inner layout as a child node.
-            // Transparent modifiers share the same layout directly.
             let innerLayout: LayoutNode
             switch modifier {
             case .padding, .frame:
@@ -265,7 +374,7 @@ public final class RootHost: @unchecked Sendable {
             var childOffsetX = absX
             var childOffsetY = absY
             if case .scroll(let axis, let scrollID) = props.layout {
-                let offset = ScrollOffsetStorage.shared.getOffset(id: scrollID)
+                let offset = context.scrollOffsetStorage.getOffset(id: scrollID)
                 switch axis {
                 case .vertical:   childOffsetY -= offset
                 case .horizontal: childOffsetX -= offset
@@ -289,13 +398,10 @@ public final class RootHost: @unchecked Sendable {
             let nextOffsetY: Float
             switch modifier {
             case .padding, .frame:
-                // Wrapping modifiers store inner layout as a child
                 innerLayout = layout.children.first ?? layout
                 nextOffsetX = absX
                 nextOffsetY = absY
             default:
-                // Transparent modifiers share the same layout node.
-                // Pass original offsets to avoid double-counting layout.x/y.
                 innerLayout = layout
                 nextOffsetX = offsetX
                 nextOffsetY = offsetY

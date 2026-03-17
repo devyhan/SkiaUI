@@ -12,6 +12,7 @@ public struct CommandEncoder: Sendable {
     private static let OP_DRAW_TEXT: UInt8 = 7
     private static let OP_RETAINED_BEGIN: UInt8 = 8
     private static let OP_RETAINED_END: UInt8 = 9
+    private static let OP_DRAW_IMAGE: UInt8 = 10
 
     public init() {}
 
@@ -73,7 +74,7 @@ public struct CommandEncoder: Sendable {
             appendFloat(&buffer, h)
             appendFloat(&buffer, radius)
             appendUInt32(&buffer, color)
-        case .drawText(let text, let x, let y, let fontSize, let fontWeight, let color, let boundsWidth, let fontFamily):
+        case .drawText(let text, let x, let y, let fontSize, let fontWeight, let color, let boundsWidth, let fontFamily, let lineLimit, let lineBreakMode):
             buffer.append(Self.OP_DRAW_TEXT)
             let textBytes = Array(text.utf8)
             appendInt32(&buffer, Int32(textBytes.count))
@@ -91,6 +92,18 @@ public struct CommandEncoder: Sendable {
             } else {
                 appendInt32(&buffer, 0)
             }
+            appendInt32(&buffer, Int32(lineLimit ?? 0))
+            appendInt32(&buffer, Int32(lineBreakMode))
+        case .drawImage(let source, let x, let y, let w, let h, let contentMode):
+            buffer.append(Self.OP_DRAW_IMAGE)
+            let sourceBytes = Array(source.utf8)
+            appendInt32(&buffer, Int32(sourceBytes.count))
+            buffer.append(contentsOf: sourceBytes)
+            appendFloat(&buffer, x)
+            appendFloat(&buffer, y)
+            appendFloat(&buffer, w)
+            appendFloat(&buffer, h)
+            appendInt32(&buffer, Int32(contentMode))
         case .retainedSubtreeBegin(let id, let version):
             buffer.append(Self.OP_RETAINED_BEGIN)
             appendInt32(&buffer, Int32(truncatingIfNeeded: id))
@@ -153,7 +166,22 @@ public struct CommandEncoder: Sendable {
             } else {
                 fontFamily = nil
             }
-            return .drawText(text: text, x: x, y: y, fontSize: fontSize, fontWeight: Int(fontWeight), color: color, boundsWidth: boundsWidth, fontFamily: fontFamily)
+            let lineLimitRaw = Int(readInt32(data, &offset))
+            let lineLimit: Int? = lineLimitRaw > 0 ? lineLimitRaw : nil
+            let lineBreakMode = Int(readInt32(data, &offset))
+            return .drawText(text: text, x: x, y: y, fontSize: fontSize, fontWeight: Int(fontWeight), color: color, boundsWidth: boundsWidth, fontFamily: fontFamily, lineLimit: lineLimit, lineBreakMode: lineBreakMode)
+        case Self.OP_DRAW_IMAGE:
+            let srcLen = Int(readInt32(data, &offset))
+            guard offset + srcLen <= data.count else { return nil }
+            let srcBytes = Array(data[offset..<offset+srcLen])
+            offset += srcLen
+            let source = String(decoding: srcBytes, as: UTF8.self)
+            let x = readFloat(data, &offset)
+            let y = readFloat(data, &offset)
+            let w = readFloat(data, &offset)
+            let h = readFloat(data, &offset)
+            let contentMode = Int(readInt32(data, &offset))
+            return .drawImage(source: source, x: x, y: y, width: w, height: h, contentMode: contentMode)
         case Self.OP_RETAINED_BEGIN:
             let id = readInt32(data, &offset)
             let ver = readInt32(data, &offset)

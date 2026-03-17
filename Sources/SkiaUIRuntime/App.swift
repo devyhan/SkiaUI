@@ -8,3 +8,11 @@ public protocol App {
     @ViewBuilder var body: RootBody { get }
     init()
 }
+
+extension App {
+    public static func main() {
+        let app = Self()
+        let host = RootHost()
+        host.render(app.body)
+    }
+}

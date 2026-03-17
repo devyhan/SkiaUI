@@ -1,7 +1,7 @@
 // LayoutNode.swift – SkiaUILayout module
 // Result of layout computation, representing positioned geometry.
 
-public struct LayoutNode: Equatable, Sendable {
+public struct LayoutNode: Hashable, Sendable {
     public var x: Float
     public var y: Float
     public var width: Float
