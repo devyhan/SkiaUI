@@ -5,12 +5,16 @@
 import JavaScriptKit
 
 public struct JSHostBinding {
+    private static var skiaUI: JSObject {
+        JSObject.global.skiaUI.object!
+    }
+
     public static func getViewportWidth() -> Float {
-        Float(JSObject.global.skiaUI.viewportWidth.number ?? 800)
+        Float(skiaUI.viewportWidth.number ?? 800)
     }
 
     public static func getViewportHeight() -> Float {
-        Float(JSObject.global.skiaUI.viewportHeight.number ?? 600)
+        Float(skiaUI.viewportHeight.number ?? 600)
     }
 
     public static func requestAnimationFrame(_ callback: @escaping () -> Void) {

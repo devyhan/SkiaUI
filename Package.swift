@@ -9,9 +9,7 @@ let package = Package(
         .library(name: "SkiaUI", targets: ["SkiaUI"]),
     ],
     dependencies: [
-        // JavaScriptKit dependency is needed only for Wasm builds.
-        // Uncomment when building for WebAssembly with a valid fork:
-        // .package(url: "https://github.com/nicklimmm/JavaScriptKit.git", branch: "nicklimmm/6.2-nightly"),
+        .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", exact: "0.47.1"),
     ],
     targets: [
         // MARK: - Core Types
@@ -93,8 +91,7 @@ let package = Package(
                 "SkiaUIRuntime",
                 "SkiaUIDisplayList",
                 "SkiaUISemantics",
-                // Uncomment when building for Wasm:
-                // .product(name: "JavaScriptKit", package: "JavaScriptKit"),
+                .product(name: "JavaScriptKit", package: "JavaScriptKit"),
             ]
         ),
 
@@ -114,6 +111,12 @@ let package = Package(
         .target(
             name: "SkiaUI",
             dependencies: ["SkiaUIDSL", "SkiaUIState", "SkiaUIRuntime"]
+        ),
+
+        // MARK: - Docs Site (WASM demo app)
+        .executableTarget(
+            name: "SkiaUIDocsSite",
+            dependencies: ["SkiaUI", "SkiaUIWebBridge"]
         ),
 
         // MARK: - Tests

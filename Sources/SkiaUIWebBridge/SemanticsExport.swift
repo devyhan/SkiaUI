@@ -10,7 +10,8 @@ public struct SemanticsExport {
     public static func exportToJS(_ tree: SemanticsTree) {
         guard let json = tree.toJSON() else { return }
         let jsonString = String(data: json, encoding: .utf8) ?? "{}"
-        _ = JSObject.global.skiaUI.updateSemantics.function?(jsonString)
+        let skiaUI = JSObject.global.skiaUI.object!
+        _ = skiaUI.updateSemantics.function?(jsonString)
     }
 }
 #else
