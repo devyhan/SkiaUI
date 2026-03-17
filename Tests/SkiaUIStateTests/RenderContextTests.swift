@@ -4,7 +4,7 @@
 import Testing
 @testable import SkiaUIState
 
-@Suite struct RenderContextTests {
+@Suite(.serialized) struct RenderContextTests {
     @Test func longPressHandlerRegistration() {
         let ctx = RenderContext()
         var called = [Int]()
