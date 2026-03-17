@@ -17,10 +17,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install SwiftWasm toolchain
+      - name: Install Swift 6.2.4
         run: |
-          SWIFT_VERSION="swift-6.2-RELEASE"
-          TOOLCHAIN_URL="https://download.swift.org/swift-6.2-release/ubuntu2404/${SWIFT_VERSION}/${SWIFT_VERSION}-ubuntu24.04.tar.gz"
+          SWIFT_VERSION="swift-6.2.4-RELEASE"
+          TOOLCHAIN_URL="https://download.swift.org/swift-6.2.4-release/ubuntu2404/${SWIFT_VERSION}/${SWIFT_VERSION}-ubuntu24.04.tar.gz"
           curl -sL "$TOOLCHAIN_URL" -o swift.tar.gz
           sudo tar xzf swift.tar.gz -C /opt
           echo "/opt/${SWIFT_VERSION}-ubuntu24.04/usr/bin" >> $GITHUB_PATH
