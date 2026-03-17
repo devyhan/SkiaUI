@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkiaUI Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #f2f2f2; overflow: hidden; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <canvas id="skia-canvas"></canvas>
+  <script type="module">
+    import CanvasKitInit from "https://unpkg.com/canvaskit-wasm@0.39.1/bin/canvaskit.js";
+    import { play } from "./displayListPlayer.mjs";
+    import { init } from "./package/index.js";
+
+    const CanvasKit = await CanvasKitInit({
+      locateFile: (file) => `https://unpkg.com/canvaskit-wasm@0.39.1/bin/${file}`,
+    });
+
+    const canvas = document.getElementById("skia-canvas");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const surface = CanvasKit.MakeWebGLCanvasSurface(canvas);
+    const skCanvas = surface.getCanvas();
+
+    // Load default font for text rendering
+    const fontResp = await fetch("https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5Q.ttf");
+    const fontData = await fontResp.arrayBuffer();
+    const typeface = CanvasKit.Typeface.MakeFreeTypeFaceFromData(fontData);
+
+    // Set up the bridge that Swift's WebBridge.start() expects
+    window.skiaUI = {
+      viewport: { width: canvas.width, height: canvas.height },
+      submitDisplayList(bytes) {
+        const buf = bytes.buffer ?? bytes;
+        skCanvas.clear(CanvasKit.Color4f(0.95, 0.95, 0.95, 1.0));
+        play(CanvasKit, buf, skCanvas, typeface);
+        surface.flush();
+      },
+    };
+
+    // Forward click events to Swift tap handler
+    canvas.addEventListener("click", (e) => {
+      if (typeof window.skiaUI.handleTap === "function") {
+        window.skiaUI.handleTap(e.offsetX, e.offsetY);
+      }
+    });
+
+    // Forward wheel events to Swift scroll handler
+    canvas.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      if (typeof window.skiaUI.handleScroll === "function") {
+        window.skiaUI.handleScroll(e.offsetX, e.offsetY, e.deltaX, e.deltaY);
+      }
+    }, { passive: false });
+
+    // Start the Swift WASM app
+    await init();
+  </script>
+</body>
+</html>
