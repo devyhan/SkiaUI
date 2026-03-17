@@ -13,7 +13,7 @@ A WASM version of Skia's Canvas API.
 - Project: https://github.com/google/skia/tree/main/modules/canvaskit
 - Version: 0.40.0
 - License: BSD-3-Clause
-- Used in: WebHost (runtime dependency)
+- Used in: WebClient (runtime dependency)
 
 Copyright (c) 2011 Google Inc. All rights reserved.
 
@@ -78,7 +78,7 @@ otherwise be required by Sections 4(a), 4(b) and 4(d) of the License.
 
 
 ================================================================================
-Development Dependencies (WebHost)
+Development Dependencies (WebClient)
 ================================================================================
 
 The following packages are used only during development and are not

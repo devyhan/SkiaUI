@@ -20,12 +20,12 @@ struct DevCommand: ParsableCommand {
         print("Build succeeded.")
 
         // Step 2: Start dev server
-        let webHostDir = projectRoot.appendingPathComponent("WebHost")
-        print("Starting dev server in WebHost...")
+        let webClientDir = projectRoot.appendingPathComponent("WebClient")
+        print("Starting dev server in WebClient...")
         try shellExec(
             "/usr/bin/env",
             arguments: ["pnpm", "dev"],
-            currentDirectory: webHostDir
+            currentDirectory: webClientDir
         )
     }
 }

@@ -107,7 +107,7 @@ Each layer is a separate Swift module. The binary display list is the **only thi
 
 - Swift 6.2+
 - macOS 14.0+
-- Node.js / pnpm (for web host)
+- Node.js / pnpm (for WebClient)
 
 ### Build & Test
 
@@ -117,16 +117,6 @@ swift build
 
 # Run tests
 swift test
-```
-
-### Run Preview
-
-```bash
-# Terminal 1: Start the Swift preview server
-swift run SkiaUIPreview
-
-# Terminal 2: Start the web host dev server
-cd WebHost && pnpm install && pnpm dev
 ```
 
 ## Known Limitations

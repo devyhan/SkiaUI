@@ -120,8 +120,6 @@ graph BT
     WebBridge["SkiaUIWebBridge"]
     DevTools["SkiaUIDevTools"]
     Umbrella["SkiaUI<br/>(umbrella)"]
-    Preview["SkiaUIPreview<br/>(executable)"]
-
     DSL --> Element
     DSL --> Text
     Reconciler --> Element
@@ -152,12 +150,10 @@ graph BT
     Umbrella --> DSL
     Umbrella --> State
     Umbrella --> Runtime
-    Preview --> Umbrella
 
     style Umbrella fill:#f5a623,color:#000
     style Runtime fill:#4a90d9,color:#fff
     style DSL fill:#4a90d9,color:#fff
-    style Preview fill:#50c878,color:#000
     style WebBridge fill:#50c878,color:#000
 ```
 
@@ -223,8 +219,6 @@ SkiaUIDevTools      -> [SkiaUIElement, SkiaUILayout, SkiaUISemantics,
                         SkiaUIRenderTree, SkiaUIDisplayList]
   TreeInspector, DebugOverlay, SemanticsInspector
 
-SkiaUIPreview       -> [SkiaUI]  (executable target)
-  HTTP server serving display list to WebHost for browser preview
 ```
 
 No external dependencies for the core modules. `JavaScriptKit` is only needed by `SkiaUIWebBridge` for WebAssembly builds.
@@ -428,32 +422,20 @@ Uses `buildPartialBlock` (SE-0348) for unlimited children support. `TupleView2` 
 | `HorizontalAlignment` | `.leading`, `.center`, `.trailing` |
 | `VerticalAlignment` | `.top`, `.center`, `.bottom` |
 
-## Web Host
+## Web Client
 
-The TypeScript web host (`WebHost/`) is intentionally thin. Its only job is:
-
-1. **Bootstrap** -- load CanvasKit WASM, create a WebGL-backed `<canvas>`, load fonts
-2. **Replay** -- read the binary display list and call CanvasKit draw methods
-3. **Forward events** -- send pointer/click coordinates back to Swift for hit testing
-4. **Sync viewport** -- notify Swift on browser resize
-
-The host has no knowledge of the UI tree, layout, or state. It is a display list player.
+`WebClient/` contains the TypeScript client library that replays binary display lists via CanvasKit. It has no knowledge of the UI tree, layout, or state.
 
 ```text
-WebHost/
-  package.json              canvaskit-wasm, vite, typescript
-  vite.config.ts
-  index.html
+WebClient/
+  package.json              canvaskit-wasm, typescript
   src/
-    main.ts                 Entry point
-    bootstrap.ts            CanvasKit initialization sequence
-    canvaskitHost.ts        Surface creation, frame loop, viewport sync
     canvaskitBackend.ts     Canvas API wrapper
     displayListPlayer.ts    Binary buffer -> CanvasKit API calls
     fontManager.ts          Custom font loading and typeface management
-    eventBridge.ts          Pointer/click event delegation
-    debugOverlay.ts         FPS and debug visualization
-    semanticsOverlay.ts     Accessibility tree overlay
+    imageCache.ts           Image caching layer
+  scripts/
+    render.mjs              Node.js renderer for golden tests
 ```
 
 `displayListPlayer.ts` reads the binary format emitted by Swift's `CommandEncoder` directly from an `ArrayBuffer`. It maps opcodes to CanvasKit calls: `drawRect`, `drawRRect`, `drawText` (with glyph-width-based centering), `save`, `restore`, `translate`, `clipRect`. Colors are decoded from ARGB `UInt32` to CanvasKit `Color4f`.
@@ -491,8 +473,7 @@ SkiaUI/
     SkiaUIRuntime/             App protocol, RootHost, FrameLoop
     SkiaUIWebBridge/           WebBridge, JSHostBinding, DisplayListExport, SemanticsExport
     SkiaUIDevTools/            TreeInspector, DebugOverlay, SemanticsInspector
-    SkiaUIPreview/             main.swift (HTTP server + example dashboard)
-  WebHost/                     TypeScript CanvasKit host (Vite)
+  WebClient/                   TypeScript CanvasKit client library
   Examples/
     CounterApp/                Interactive counter demo
     AccessibilityDemo/         Accessibility modifiers demo
@@ -515,7 +496,7 @@ SkiaUI/
 
 - Swift 6.2+
 - macOS 14.0+
-- Node.js / pnpm (for web host)
+- Node.js / pnpm (for WebClient)
 
 ### Build & Run
 
@@ -525,15 +506,7 @@ swift build
 
 # Run tests (161 tests across 21 suites)
 swift test
-
-# Start the preview server (serves display list over HTTP on :3001)
-swift run SkiaUIPreview
-
-# In another terminal, start the web host dev server
-cd WebHost && pnpm install && pnpm dev
 ```
-
-Open `http://localhost:5173` in a browser. The dashboard shows 5 example views -- Counter, Typography, Shapes & Colors, Layout, and Accessibility -- demonstrating the full DSL surface.
 
 ## Project Status
 

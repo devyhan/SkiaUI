@@ -120,8 +120,6 @@ graph BT
     WebBridge["SkiaUIWebBridge"]
     DevTools["SkiaUIDevTools"]
     Umbrella["SkiaUI<br/>(umbrella)"]
-    Preview["SkiaUIPreview<br/>(executable)"]
-
     DSL --> Element
     DSL --> Text
     Reconciler --> Element
@@ -152,12 +150,10 @@ graph BT
     Umbrella --> DSL
     Umbrella --> State
     Umbrella --> Runtime
-    Preview --> Umbrella
 
     style Umbrella fill:#f5a623,color:#000
     style Runtime fill:#4a90d9,color:#fff
     style DSL fill:#4a90d9,color:#fff
-    style Preview fill:#50c878,color:#000
     style WebBridge fill:#50c878,color:#000
 ```
 
@@ -223,8 +219,6 @@ SkiaUIDevTools      -> [SkiaUIElement, SkiaUILayout, SkiaUISemantics,
                         SkiaUIRenderTree, SkiaUIDisplayList]
   TreeInspector, DebugOverlay, SemanticsInspector
 
-SkiaUIPreview       -> [SkiaUI]  (실행 가능 타깃)
-  디스플레이 리스트를 WebHost에 제공하는 HTTP 서버
 ```
 
 코어 모듈에는 외부 의존성이 없습니다. `JavaScriptKit`은 WebAssembly 빌드 시 `SkiaUIWebBridge`에서만 사용됩니다.
@@ -442,32 +436,20 @@ public struct ViewBuilder {
 | `HorizontalAlignment` | `.leading`, `.center`, `.trailing` |
 | `VerticalAlignment` | `.top`, `.center`, `.bottom` |
 
-## Web Host
+## Web Client
 
-TypeScript 웹 호스트(`WebHost/`)는 의도적으로 얇게 설계되었습니다. 역할은 다음 네 가지뿐입니다:
-
-1. **부트스트랩** -- CanvasKit WASM 로드, WebGL 기반 `<canvas>` 생성, 폰트 로딩
-2. **재생** -- 바이너리 디스플레이 리스트를 읽어 CanvasKit 드로우 메서드 호출
-3. **이벤트 전달** -- 포인터/클릭 좌표를 Swift로 전달하여 히트 테스트
-4. **뷰포트 동기화** -- 브라우저 리사이즈 시 Swift에 알림
-
-호스트는 UI 트리, 레이아웃, 상태에 대해 전혀 알지 못합니다. 디스플레이 리스트 플레이어일 뿐입니다.
+`WebClient/`는 CanvasKit을 통해 바이너리 디스플레이 리스트를 재생하는 TypeScript 클라이언트 라이브러리입니다. UI 트리, 레이아웃, 상태에 대해 전혀 알지 못합니다.
 
 ```text
-WebHost/
-  package.json              canvaskit-wasm, vite, typescript
-  vite.config.ts
-  index.html
+WebClient/
+  package.json              canvaskit-wasm, typescript
   src/
-    main.ts                 진입점
-    bootstrap.ts            CanvasKit 초기화 시퀀스
-    canvaskitHost.ts        Surface 생성, 프레임 루프, 뷰포트 동기화
     canvaskitBackend.ts     Canvas API 래퍼
     displayListPlayer.ts    바이너리 버퍼 -> CanvasKit API 호출
     fontManager.ts          커스텀 폰트 로딩 및 타입페이스 관리
-    eventBridge.ts          포인터/클릭 이벤트 위임
-    debugOverlay.ts         FPS 및 디버그 시각화
-    semanticsOverlay.ts     접근성 트리 오버레이
+    imageCache.ts           이미지 캐싱 레이어
+  scripts/
+    render.mjs              골든 테스트용 Node.js 렌더러
 ```
 
 `displayListPlayer.ts`는 Swift의 `CommandEncoder`가 생성한 바이너리 포맷을 `ArrayBuffer`에서 직접 읽습니다. opcode를 CanvasKit 호출로 매핑합니다: `drawRect`, `drawRRect`, `drawText` (글리프 폭 기반 센터링), `save`, `restore`, `translate`, `clipRect`. 색상은 ARGB `UInt32`에서 CanvasKit `Color4f`로 디코딩됩니다.
@@ -506,8 +488,7 @@ SkiaUI/
     SkiaUIRuntime/             App 프로토콜, RootHost, FrameLoop
     SkiaUIWebBridge/           WebBridge, JSHostBinding, DisplayListExport, SemanticsExport
     SkiaUIDevTools/            TreeInspector, DebugOverlay, SemanticsInspector
-    SkiaUIPreview/             main.swift (HTTP 서버 + 예제 대시보드)
-  WebHost/                     TypeScript CanvasKit 호스트 (Vite)
+  WebClient/                   TypeScript CanvasKit 클라이언트 라이브러리
   Examples/
     CounterApp/                인터랙티브 카운터 데모
     AccessibilityDemo/         접근성 modifier 데모
@@ -530,7 +511,7 @@ SkiaUI/
 
 - Swift 6.2+
 - macOS 14.0+
-- Node.js / pnpm (웹 호스트용)
+- Node.js / pnpm (WebClient용)
 
 ### 빌드 및 실행
 
@@ -540,15 +521,7 @@ swift build
 
 # 테스트 실행 (21개 스위트, 161개 테스트)
 swift test
-
-# 프리뷰 서버 시작 (HTTP :3001에서 디스플레이 리스트 제공)
-swift run SkiaUIPreview
-
-# 별도 터미널에서 웹 호스트 개발 서버 시작
-cd WebHost && pnpm install && pnpm dev
 ```
-
-브라우저에서 `http://localhost:5173`을 엽니다. 대시보드에 5개 예제 뷰(Counter, Typography, Shapes & Colors, Layout, Accessibility)가 표시되며 전체 DSL 인터페이스를 시연합니다.
 
 ## 프로젝트 상태
 

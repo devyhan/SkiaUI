@@ -105,7 +105,7 @@ graph TD
 
 - Swift 6.2+
 - macOS 14.0+
-- Node.js / pnpm (웹 호스트용)
+- Node.js / pnpm (WebClient용)
 
 ### 빌드 및 테스트
 
@@ -115,16 +115,6 @@ swift build
 
 # 테스트 실행
 swift test
-```
-
-### 프리뷰 실행
-
-```bash
-# 터미널 1: Swift 프리뷰 서버 시작
-swift run SkiaUIPreview
-
-# 터미널 2: 웹 호스트 개발 서버 시작
-cd WebHost && pnpm install && pnpm dev
 ```
 
 ## 알려진 제약사항

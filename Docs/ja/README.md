@@ -120,8 +120,6 @@ graph BT
     WebBridge["SkiaUIWebBridge"]
     DevTools["SkiaUIDevTools"]
     Umbrella["SkiaUI<br/>(umbrella)"]
-    Preview["SkiaUIPreview<br/>(executable)"]
-
     DSL --> Element
     DSL --> Text
     Reconciler --> Element
@@ -152,12 +150,10 @@ graph BT
     Umbrella --> DSL
     Umbrella --> State
     Umbrella --> Runtime
-    Preview --> Umbrella
 
     style Umbrella fill:#f5a623,color:#000
     style Runtime fill:#4a90d9,color:#fff
     style DSL fill:#4a90d9,color:#fff
-    style Preview fill:#50c878,color:#000
     style WebBridge fill:#50c878,color:#000
 ```
 
@@ -285,9 +281,9 @@ public protocol LayoutStrategy: Sendable {
 | `Font` | `.largeTitle`, `.title`, `.headline`, `.body`, `.caption`, `.custom("Name", size:)`, `.system(size:weight:design:)` |
 | `Font.Design` | `.default`, `.monospaced`, `.rounded`, `.serif` |
 
-## Web Host
+## Web Client
 
-TypeScriptウェブホスト（`WebHost/`）は意図的に薄く設計されています。ホストはUIツリー、レイアウト、状態について一切知りません。ディスプレイリストプレイヤーです。
+`WebClient/`にはCanvasKitを介してバイナリディスプレイリストを再生するTypeScriptクライアントライブラリが含まれています。UIツリー、レイアウト、状態について一切知りません。
 
 ## 始め方
 
@@ -295,18 +291,14 @@ TypeScriptウェブホスト（`WebHost/`）は意図的に薄く設計されて
 
 - Swift 6.2+
 - macOS 14.0+
-- Node.js / pnpm
+- Node.js / pnpm（WebClient用）
 
 ### ビルドと実行
 
 ```bash
 swift build
 swift test
-swift run SkiaUIPreview
-cd WebHost && pnpm install && pnpm dev
 ```
-
-ブラウザで`http://localhost:5173`を開きます。
 
 ## プロジェクト状態
 
