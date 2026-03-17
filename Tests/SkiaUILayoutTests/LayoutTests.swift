@@ -229,4 +229,54 @@ import SkiaUIElement
         let second = eng.layout(el, proposal: proposal)
         #expect(first == second)
     }
+
+    // MARK: - Phase 5: Image + Gesture Layout
+
+    @Test func imageLayoutWithProposal() {
+        let el = Element.image(.init(source: .named("photo")))
+        let node = engine.layout(el, proposal: ProposedSize(width: 200, height: 150))
+        #expect(abs(node.width - 200) < 0.01)
+        #expect(abs(node.height - 150) < 0.01)
+    }
+
+    @Test func imageLayoutDefaultSize() {
+        let el = Element.image(.init(source: .named("photo")))
+        let node = engine.layout(el, proposal: ProposedSize(width: nil, height: nil))
+        #expect(abs(node.width - 100) < 0.01)
+        #expect(abs(node.height - 100) < 0.01)
+    }
+
+    @Test func imageLayoutPartialProposal() {
+        let el = Element.image(.init(source: .named("photo")))
+        let node = engine.layout(el, proposal: ProposedSize(width: 300, height: nil))
+        #expect(abs(node.width - 300) < 0.01)
+        #expect(abs(node.height - 100) < 0.01)
+    }
+
+    @Test func onLongPressTransparentLayout() {
+        let text = Element.text("Press me", .init(fontSize: 14))
+        let modified = Element.modified(text, .onLongPress(id: 0))
+        let textNode = engine.layout(text, proposal: ProposedSize(width: 200, height: 50))
+        let modNode = engine.layout(modified, proposal: ProposedSize(width: 200, height: 50))
+        #expect(abs(textNode.width - modNode.width) < 0.01)
+        #expect(abs(textNode.height - modNode.height) < 0.01)
+    }
+
+    @Test func onDragTransparentLayout() {
+        let rect = Element.rectangle(.init())
+        let modified = Element.modified(rect, .onDrag(id: 0))
+        let rectNode = engine.layout(rect, proposal: ProposedSize(width: 100, height: 80))
+        let modNode = engine.layout(modified, proposal: ProposedSize(width: 100, height: 80))
+        #expect(abs(rectNode.width - modNode.width) < 0.01)
+        #expect(abs(rectNode.height - modNode.height) < 0.01)
+    }
+
+    @Test func textLayoutWithLineLimit() {
+        // 20 chars, fontSize=10, lineLimit=2, maxWidth=60
+        // charWidth=6, charsPerLine=10, 2 lines → height capped at 24
+        let text = String(repeating: "x", count: 20)
+        let el = Element.text(text, .init(fontSize: 10, lineLimit: 2))
+        let node = engine.layout(el, proposal: ProposedSize(width: 60, height: 200))
+        #expect(abs(node.height - 24) < 0.01)
+    }
 }

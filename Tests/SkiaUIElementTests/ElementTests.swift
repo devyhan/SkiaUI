@@ -128,4 +128,68 @@ import Testing
         let set: Set<Element> = [a, b, c]
         #expect(set.count == 2)
     }
+
+    // MARK: - Phase 5-6: LineBreakMode, TextProperties, ImageSource, ContentMode, ImageProperties, Gesture Modifiers
+
+    @Test func lineBreakModeRawValues() {
+        #expect(Element.LineBreakMode.wordWrap.rawValue == 0)
+        #expect(Element.LineBreakMode.charWrap.rawValue == 1)
+        #expect(Element.LineBreakMode.truncateTail.rawValue == 2)
+    }
+
+    @Test func textPropertiesLineLimitDefault() {
+        let props = Element.TextProperties()
+        #expect(props.lineLimit == nil)
+        #expect(props.lineBreakMode == .wordWrap)
+    }
+
+    @Test func textPropertiesWithLineLimit() {
+        let props = Element.TextProperties(lineLimit: 3, lineBreakMode: .truncateTail)
+        #expect(props.lineLimit == 3)
+        #expect(props.lineBreakMode == .truncateTail)
+    }
+
+    @Test func imageSourceNamedSourceString() {
+        let source = Element.ImageSource.named("icon")
+        #expect(source.sourceString == "icon")
+    }
+
+    @Test func imageSourceUrlSourceString() {
+        let source = Element.ImageSource.url("https://x.com/img.png")
+        #expect(source.sourceString == "https://x.com/img.png")
+    }
+
+    @Test func contentModeRawValues() {
+        #expect(Element.ContentMode.fit.rawValue == 0)
+        #expect(Element.ContentMode.fill.rawValue == 1)
+    }
+
+    @Test func imagePropertiesDefault() {
+        let props = Element.ImageProperties(source: .named("x"))
+        #expect(props.contentMode == .fit)
+    }
+
+    @Test func imageElementEquality() {
+        let a = Element.image(.init(source: .named("icon")))
+        let b = Element.image(.init(source: .named("icon")))
+        let c = Element.image(.init(source: .named("other")))
+        #expect(a == b)
+        #expect(a != c)
+    }
+
+    @Test func onLongPressModifierEquality() {
+        let a = Element.Modifier.onLongPress(id: 1)
+        let b = Element.Modifier.onLongPress(id: 1)
+        let c = Element.Modifier.onLongPress(id: 2)
+        #expect(a == b)
+        #expect(a != c)
+    }
+
+    @Test func onDragModifierEquality() {
+        let a = Element.Modifier.onDrag(id: 0)
+        let b = Element.Modifier.onDrag(id: 0)
+        let c = Element.Modifier.onDrag(id: 1)
+        #expect(a == b)
+        #expect(a != c)
+    }
 }

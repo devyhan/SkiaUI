@@ -90,4 +90,48 @@ import SkiaUILayout
         #expect(tree.root.children[0].label == "A")
         #expect(tree.root.children[1].label == "B")
     }
+
+    // MARK: - Phase 5: Image + Gesture Semantics
+
+    @Test func imageElementSemantics() {
+        var builder = SemanticsTreeBuilder()
+        let element = Element.image(.init(source: .named("photo")))
+        let layout = LayoutNode(width: 100, height: 100)
+        let tree = builder.build(element: element, layout: layout)
+        #expect(tree.root.role == .image)
+        #expect(tree.root.label == "photo")
+    }
+
+    @Test func imageUrlSemantics() {
+        var builder = SemanticsTreeBuilder()
+        let element = Element.image(.init(source: .url("https://x")))
+        let layout = LayoutNode(width: 100, height: 100)
+        let tree = builder.build(element: element, layout: layout)
+        #expect(tree.root.role == .image)
+        #expect(tree.root.label == "https://x")
+    }
+
+    @Test func onLongPressSemantics() {
+        var builder = SemanticsTreeBuilder()
+        let element = Element.modified(
+            .text("Hold me", .init()),
+            .onLongPress(id: 0)
+        )
+        let layout = LayoutNode(width: 100, height: 30)
+        let tree = builder.build(element: element, layout: layout)
+        #expect(tree.root.actions.contains(.longPress))
+    }
+
+    @Test func onDragSemanticsNoAction() {
+        var builder = SemanticsTreeBuilder()
+        let element = Element.modified(
+            .text("Drag me", .init()),
+            .onDrag(id: 0)
+        )
+        let layout = LayoutNode(width: 100, height: 30)
+        let tree = builder.build(element: element, layout: layout)
+        // onDrag does not add any semantic action
+        #expect(!tree.root.actions.contains(.tap))
+        #expect(!tree.root.actions.contains(.longPress))
+    }
 }

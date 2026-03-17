@@ -141,4 +141,48 @@ import SkiaUIElement
         tracker.clear()
         #expect(tracker.isEmpty)
     }
+
+    // MARK: - Phase 5: Image Element Reconciliation
+
+    @Test func imageIdenticalNoPatch() {
+        let tree = Element.image(.init(source: .named("icon")))
+        let patches = reconciler.diff(old: tree, new: tree)
+        #expect(patches.isEmpty)
+    }
+
+    @Test func imageDifferentSourcePatch() {
+        let old = Element.image(.init(source: .named("icon")))
+        let new = Element.image(.init(source: .named("photo")))
+        let patches = reconciler.diff(old: old, new: new)
+        #expect(patches.count == 1)
+        if case .update = patches.first {
+            // pass
+        } else {
+            Issue.record("Expected update patch")
+        }
+    }
+
+    @Test func imageDifferentContentModePatch() {
+        let old = Element.image(.init(source: .named("icon"), contentMode: .fit))
+        let new = Element.image(.init(source: .named("icon"), contentMode: .fill))
+        let patches = reconciler.diff(old: old, new: new)
+        #expect(patches.count == 1)
+        if case .update = patches.first {
+            // pass
+        } else {
+            Issue.record("Expected update patch")
+        }
+    }
+
+    @Test func imageToTextReplace() {
+        let old = Element.image(.init(source: .named("icon")))
+        let new = Element.text("Hello", .init())
+        let patches = reconciler.diff(old: old, new: new)
+        #expect(patches.count == 1)
+        if case .replace = patches.first {
+            // pass
+        } else {
+            Issue.record("Expected replace patch")
+        }
+    }
 }

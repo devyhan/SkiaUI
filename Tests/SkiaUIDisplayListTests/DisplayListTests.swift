@@ -76,7 +76,7 @@ import Testing
         let encoder = CommandEncoder()
         let decoded = encoder.decode(encoder.encode(original))
         #expect(decoded == original)
-        if case .drawText(_, _, _, _, _, _, _, let family) = decoded!.commands[0] {
+        if case .drawText(_, _, _, _, _, _, _, let family, _, _) = decoded!.commands[0] {
             #expect(family == nil)
         }
     }
@@ -137,5 +137,64 @@ import Testing
         // Third build: should regenerate full commands
         let thirdList = builder.build(from: node)
         #expect(thirdList.commands.count == firstList.commands.count)
+    }
+
+    // MARK: - Phase 5: drawImage + drawText lineLimit Encoding
+
+    @Test func drawImageEncodingRoundTrip() {
+        let original = DisplayList(commands: [
+            .drawImage(source: "img.png", x: 10, y: 20, width: 100, height: 80, contentMode: 0),
+        ], version: 1)
+        let encoder = CommandEncoder()
+        let decoded = encoder.decode(encoder.encode(original))
+        #expect(decoded == original)
+    }
+
+    @Test func drawImageContentModeFill() {
+        let original = DisplayList(commands: [
+            .drawImage(source: "photo.jpg", x: 0, y: 0, width: 200, height: 150, contentMode: 1),
+        ], version: 1)
+        let encoder = CommandEncoder()
+        let decoded = encoder.decode(encoder.encode(original))
+        #expect(decoded == original)
+    }
+
+    @Test func drawImageUnicodeSource() {
+        let original = DisplayList(commands: [
+            .drawImage(source: "이미지.png", x: 0, y: 0, width: 50, height: 50, contentMode: 0),
+        ], version: 1)
+        let encoder = CommandEncoder()
+        let decoded = encoder.decode(encoder.encode(original))
+        #expect(decoded == original)
+    }
+
+    @Test func drawTextWithLineLimitRoundTrip() {
+        let original = DisplayList(commands: [
+            .drawText(text: "Hello World", x: 10, y: 20, fontSize: 14, fontWeight: 400, color: 0xFF000000, boundsWidth: 100, lineLimit: 3, lineBreakMode: 1),
+        ], version: 1)
+        let encoder = CommandEncoder()
+        let decoded = encoder.decode(encoder.encode(original))
+        #expect(decoded == original)
+    }
+
+    @Test func drawTextLineLimitNilRoundTrip() {
+        let original = DisplayList(commands: [
+            .drawText(text: "No limit", x: 0, y: 14, fontSize: 14, fontWeight: 400, color: 0xFF000000, boundsWidth: 80, lineLimit: nil, lineBreakMode: 0),
+        ], version: 1)
+        let encoder = CommandEncoder()
+        let decoded = encoder.decode(encoder.encode(original))
+        #expect(decoded == original)
+        if case .drawText(_, _, _, _, _, _, _, _, let lineLimit, _) = decoded!.commands[0] {
+            #expect(lineLimit == nil)
+        }
+    }
+
+    @Test func drawTextLineBreakModeDefault() {
+        let original = DisplayList(commands: [
+            .drawText(text: "Default", x: 0, y: 14, fontSize: 14, fontWeight: 400, color: 0xFF000000, boundsWidth: 60, lineLimit: nil, lineBreakMode: 0),
+        ], version: 1)
+        let encoder = CommandEncoder()
+        let decoded = encoder.decode(encoder.encode(original))
+        #expect(decoded == original)
     }
 }

@@ -370,4 +370,90 @@ import SkiaUIText
             Issue.record("Expected modified element with font modifier")
         }
     }
+
+    // MARK: - Phase 5: Multiline Text + Image DSL
+
+    @Test func textWithLineLimit() {
+        let view = Text("x").lineLimit(2)
+        let element = view.asElement()
+        if case .text(_, let props) = element {
+            #expect(props.lineLimit == 2)
+        } else {
+            Issue.record("Expected text element")
+        }
+    }
+
+    @Test func textWithLineBreakMode() {
+        let view = Text("x").lineBreakMode(.truncateTail)
+        let element = view.asElement()
+        if case .text(_, let props) = element {
+            #expect(props.lineBreakMode == .truncateTail)
+        } else {
+            Issue.record("Expected text element")
+        }
+    }
+
+    @Test func textLineLimitNil() {
+        let view = Text("x").lineLimit(nil)
+        let element = view.asElement()
+        if case .text(_, let props) = element {
+            #expect(props.lineLimit == nil)
+        } else {
+            Issue.record("Expected text element")
+        }
+    }
+
+    @Test func imageNamedInit() {
+        let view = Image("icon")
+        let element = view.asElement()
+        if case .image(let props) = element {
+            #expect(props.source == .named("icon"))
+            #expect(props.contentMode == .fit)
+        } else {
+            Issue.record("Expected image element")
+        }
+    }
+
+    @Test func imageUrlInit() {
+        let view = Image(url: "https://x")
+        let element = view.asElement()
+        if case .image(let props) = element {
+            #expect(props.source == .url("https://x"))
+        } else {
+            Issue.record("Expected image element")
+        }
+    }
+
+    @Test func imageAspectRatioFill() {
+        let view = Image("x").aspectRatio(contentMode: .fill)
+        let element = view.asElement()
+        if case .image(let props) = element {
+            #expect(props.contentMode == .fill)
+        } else {
+            Issue.record("Expected image element")
+        }
+    }
+
+    @Test func imageResizable() {
+        let view = Image("x").resizable()
+        #expect(view._isResizable == true)
+    }
+
+    @Test func imageInVStack() {
+        let view = VStack {
+            Image("photo")
+            Text("Caption")
+        }
+        let element = view.asElement()
+        if case .container(_, let children) = element {
+            #expect(children.count == 2)
+            if case .image = children[0] {
+                // pass
+            } else {
+                Issue.record("Expected first child to be image, got: \(children[0])")
+            }
+        } else {
+            Issue.record("Expected container element")
+        }
+    }
 }

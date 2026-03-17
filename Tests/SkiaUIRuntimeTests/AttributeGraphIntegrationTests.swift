@@ -11,16 +11,25 @@ import SkiaUIDisplayList
 extension AllRuntimeTests {
 @Suite(.serialized) struct AttributeGraphIntegrationTests {
 
-    // Helper to reset all shared state before each test
+    // Create an isolated context per test to avoid cross-target interference.
+    private func makeIsolatedHost(width: Float = 400, height: Float = 300) -> RootHost {
+        let context = RenderContext()
+        let host = RootHost(context: context)
+        host.setViewport(width: width, height: height)
+        return host
+    }
+
+    // Legacy reset for tests still using default context.
     private func resetAll() {
         StateStorage.shared.reset()
         DependencyRecorder.shared.clearCallbacks()
+        ScrollOffsetStorage.shared.reset()
+        resetTapState()
+        resetScrollIDCounter()
     }
 
     @Test func firstFrameEvaluatesAll() {
-        resetAll()
-        let host = RootHost()
-        host.setViewport(width: 400, height: 300)
+        let host = makeIsolatedHost()
 
         var bytes: [UInt8] = []
         host.setOnDisplayList { bytes = $0 }
@@ -30,16 +39,13 @@ extension AllRuntimeTests {
     }
 
     @Test func unchangedViewProducesSameOutput() {
-        resetAll()
-
         struct StaticView: View {
             var body: some View {
                 Text("Static")
             }
         }
 
-        let host = RootHost()
-        host.setViewport(width: 400, height: 300)
+        let host = makeIsolatedHost()
 
         var captures: [[UInt8]] = []
         host.setOnDisplayList { captures.append($0) }
@@ -52,10 +58,7 @@ extension AllRuntimeTests {
     }
 
     @Test func primitiveViewChangeProducesDifferentOutput() {
-        resetAll()
-
-        let host = RootHost()
-        host.setViewport(width: 400, height: 300)
+        let host = makeIsolatedHost()
 
         var captures: [[UInt8]] = []
         host.setOnDisplayList { captures.append($0) }
@@ -68,10 +71,7 @@ extension AllRuntimeTests {
     }
 
     @Test func identicalOutputPreservesCache() {
-        resetAll()
-
-        let host = RootHost()
-        host.setViewport(width: 400, height: 300)
+        let host = makeIsolatedHost()
 
         var captures: [[UInt8]] = []
         host.setOnDisplayList { captures.append($0) }
@@ -88,10 +88,7 @@ extension AllRuntimeTests {
     }
 
     @Test func multipleRendersCycleConsistently() {
-        resetAll()
-
-        let host = RootHost()
-        host.setViewport(width: 400, height: 300)
+        let host = makeIsolatedHost()
 
         var lastBytes: [UInt8] = []
         host.setOnDisplayList { lastBytes = $0 }
@@ -107,11 +104,8 @@ extension AllRuntimeTests {
     }
 
     @Test func scrollOffsetChangeStillWorks() {
-        resetAll()
-        resetScrollIDCounter()
-        ScrollOffsetStorage.shared.reset()
-
-        let host = RootHost()
+        let context = RenderContext()
+        let host = RootHost(context: context)
         host.setViewport(width: 300, height: 200)
 
         var captures: [[UInt8]] = []
@@ -132,9 +126,9 @@ extension AllRuntimeTests {
 
         host.render(view)
 
-        ScrollOffsetStorage.shared.setContentSize(id: 0, size: 1000)
-        ScrollOffsetStorage.shared.setViewportSize(id: 0, size: 200)
-        ScrollOffsetStorage.shared.applyDelta(id: 0, delta: 50)
+        context.scrollOffsetStorage.setContentSize(id: 0, size: 1000)
+        context.scrollOffsetStorage.setViewportSize(id: 0, size: 200)
+        context.scrollOffsetStorage.applyDelta(id: 0, delta: 50)
 
         host.render(view)
 
@@ -143,8 +137,6 @@ extension AllRuntimeTests {
     }
 
     @Test func nestedCompositeViewsWork() {
-        resetAll()
-
         struct Inner: View {
             var body: some View { Text("Inner") }
         }
@@ -157,8 +149,7 @@ extension AllRuntimeTests {
             }
         }
 
-        let host = RootHost()
-        host.setViewport(width: 400, height: 300)
+        let host = makeIsolatedHost()
 
         var bytes: [UInt8] = []
         host.setOnDisplayList { bytes = $0 }
@@ -173,10 +164,7 @@ extension AllRuntimeTests {
     }
 
     @Test func goldenOutputDecodable() {
-        resetAll()
-
-        let host = RootHost()
-        host.setViewport(width: 400, height: 300)
+        let host = makeIsolatedHost()
 
         var bytes: [UInt8] = []
         host.setOnDisplayList { bytes = $0 }
@@ -194,8 +182,6 @@ extension AllRuntimeTests {
     }
 
     @Test func graphCacheSurvivesMultipleFrames() {
-        resetAll()
-
         struct DeepView: View {
             var body: some View {
                 VStack {
@@ -208,8 +194,7 @@ extension AllRuntimeTests {
             }
         }
 
-        let host = RootHost()
-        host.setViewport(width: 400, height: 300)
+        let host = makeIsolatedHost()
 
         var allCaptures: [[UInt8]] = []
         host.setOnDisplayList { allCaptures.append($0) }

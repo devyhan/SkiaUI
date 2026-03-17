@@ -159,7 +159,7 @@ extension AllRuntimeTests {
         let encoder = CommandEncoder()
         guard let dl = encoder.decode(bytes) else { return [] }
         return dl.commands.compactMap { cmd -> String? in
-            if case .drawText(let t, _, _, _, _, _, _, _) = cmd { return t }
+            if case .drawText(let t, _, _, _, _, _, _, _, _, _) = cmd { return t }
             return nil
         }
     }
