@@ -267,8 +267,18 @@ enum Templates {
     #!/bin/bash
     set -euo pipefail
 
+    # Auto-detect WASM SDK (override with: SDK=my-sdk ./build.sh)
+    if [ -z "${SDK:-}" ]; then
+      SDK=$(swift sdk list 2>/dev/null | grep '_wasm$' | grep -v embedded | tail -1)
+      if [ -z "$SDK" ]; then
+        echo "Error: No WASM SDK found. Install one with: swift sdk install <url>"
+        exit 1
+      fi
+      echo "Detected WASM SDK: $SDK"
+    fi
+
     # Build the WASM binary
-    swift package --swift-sdk swift-6.2.4-RELEASE_wasm js --product App -c release
+    swift package --swift-sdk "$SDK" js --product App -c release
 
     # Create the distribution directory
     rm -rf dist

@@ -10,6 +10,9 @@ struct BuildCommand: ParsableCommand {
     @Option(name: .long, help: "Executable target name (auto-detected from Package.swift if omitted).")
     var product: String?
 
+    @Option(name: .long, help: "WASM SDK identifier (auto-detected if omitted).")
+    var swiftSdk: String?
+
     func run() throws {
         let productName: String
         if let explicit = product {
@@ -19,12 +22,20 @@ struct BuildCommand: ParsableCommand {
             print("Detected product: \(productName)")
         }
 
+        let sdk: String
+        if let explicit = swiftSdk {
+            sdk = explicit
+        } else {
+            sdk = try detectWasmSDK()
+            print("Detected WASM SDK: \(sdk)")
+        }
+
         print("Building \(productName) for WebAssembly...")
         try shellExec(
             "/usr/bin/env",
             arguments: [
                 "swift", "package",
-                "--swift-sdk", "swift-6.2.4-RELEASE_wasm",
+                "--swift-sdk", sdk,
                 "js",
                 "--product", productName,
                 "-c", "release",
