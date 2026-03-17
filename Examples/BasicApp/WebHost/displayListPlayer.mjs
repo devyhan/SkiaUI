@@ -1,5 +1,4 @@
 // displayListPlayer.mjs – Browser-compatible DisplayList binary decoder + CanvasKit renderer.
-// Extracted from WebClient/scripts/render.mjs for use in DocsHost.
 
 // DisplayList opcodes (must match CommandEncoder.swift)
 const OP_SAVE = 1;

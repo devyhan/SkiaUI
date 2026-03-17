@@ -300,6 +300,61 @@ swift build
 swift test
 ```
 
+### クイックスタート (WASM)
+
+WebAssemblyでSkiaUIアプリをブラウザに直接デプロイする5ステップ:
+
+**1. Swift WASM SDKをインストール**
+
+```bash
+swift sdk install https://download.swift.org/swift-6.2.4-release/wasm-sdk/swift-6.2.4-RELEASE/swift-6.2.4-RELEASE_wasm.artifactbundle.tar.gz
+```
+
+**2. サンプルプロジェクトをコピー**
+
+```bash
+cp -r Examples/BasicApp ~/MySkiaUIApp
+cd ~/MySkiaUIApp
+```
+
+**3. `Sources/App.swift`を編集**
+
+```swift
+import SkiaUI
+import SkiaUIWebBridge
+
+@main
+struct BasicApp: SkiaUI.App {
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Hello, SkiaUI!")
+                .fontSize(28)
+                .bold()
+        }
+    }
+
+    static func main() {
+        WebBridge.start(BasicApp.self)
+    }
+}
+```
+
+**4. ビルド**
+
+```bash
+./build.sh
+```
+
+**5. サーバーを起動して開く**
+
+```bash
+npx serve dist    # または: python3 -m http.server -d dist
+```
+
+ブラウザで `http://localhost:3000` を開きます。
+
+> 完全なサンプルプロジェクトは [`Examples/BasicApp/`](https://github.com/devyhan/SkiaUI/tree/main/Examples/BasicApp) を参照してください。
+
 ## サーバー統合
 
 SkiaUIはサーバー（例：[Vapor](https://vapor.codes)）でパッケージ依存として使用できます。サーバーが完全なレンダリングパイプラインを実行し、結果の`[UInt8]`バイナリをHTTPで送信します。ブラウザクライアントはそのバイナリをfetchし、`DisplayListPlayer`で`<canvas>`上に再生します。

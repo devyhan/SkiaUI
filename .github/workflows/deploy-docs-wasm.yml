@@ -6,7 +6,7 @@ on:
     paths:
       - 'Sources/**'
       - 'Docs/**'
-      - 'DocsHost/**'
+      - 'Examples/BasicApp/WebHost/**'
       - '.github/workflows/deploy-docs-wasm.yml'
   workflow_dispatch:
 
@@ -43,8 +43,8 @@ jobs:
           mkdir -p _site
           cp -r Docs/* _site/
           mkdir -p _site/demos
-          cp DocsHost/index.html _site/demos/
-          cp DocsHost/displayListPlayer.mjs _site/demos/
+          cp Examples/BasicApp/WebHost/index.html _site/demos/
+          cp Examples/BasicApp/WebHost/displayListPlayer.mjs _site/demos/
           cp -r .build/plugins/PackageToJS/outputs/Package _site/demos/package
           touch _site/.nojekyll
 

@@ -7,6 +7,7 @@ let package = Package(
     platforms: [.macOS(.v14)],
     products: [
         .library(name: "SkiaUI", targets: ["SkiaUI"]),
+        .library(name: "SkiaUIWebBridge", targets: ["SkiaUIWebBridge"]),
     ],
     dependencies: [
         .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", exact: "0.47.1"),

@@ -14,6 +14,8 @@
 > SkiaUI目前处于**实验阶段**。API不稳定，可能会在没有通知的情况下更改。不建议在生产环境中使用。
 
 ```swift
+import SkiaUI
+
 struct CounterView: View {
     @State private var count = 0
 
@@ -117,6 +119,61 @@ swift build
 swift test
 ```
 
+### 快速开始 (WASM)
+
+通过WebAssembly将SkiaUI应用直接部署到浏览器的5个步骤:
+
+**1. 安装Swift WASM SDK**
+
+```bash
+swift sdk install https://download.swift.org/swift-6.2.4-release/wasm-sdk/swift-6.2.4-RELEASE/swift-6.2.4-RELEASE_wasm.artifactbundle.tar.gz
+```
+
+**2. 复制示例项目**
+
+```bash
+cp -r Examples/BasicApp ~/MySkiaUIApp
+cd ~/MySkiaUIApp
+```
+
+**3. 编辑 `Sources/App.swift`**
+
+```swift
+import SkiaUI
+import SkiaUIWebBridge
+
+@main
+struct BasicApp: SkiaUI.App {
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Hello, SkiaUI!")
+                .fontSize(28)
+                .bold()
+        }
+    }
+
+    static func main() {
+        WebBridge.start(BasicApp.self)
+    }
+}
+```
+
+**4. 构建**
+
+```bash
+./build.sh
+```
+
+**5. 启动服务器并打开**
+
+```bash
+npx serve dist    # 或: python3 -m http.server -d dist
+```
+
+在浏览器中打开 `http://localhost:3000`。
+
+> 完整示例项目请参阅 [`Examples/BasicApp/`](../Examples/BasicApp/)。
+
 ## 服务器集成
 
 SkiaUI可以在服务器（如Vapor）上运行，并通过HTTP将二进制显示列表流式传输到浏览器客户端。
@@ -183,7 +240,6 @@ player.play(buffer, canvas);
 - 不支持键盘输入和焦点管理
 - 不支持图片加载和渲染
 - 不支持动画和过渡
-- 不支持WebAssembly直接部署（需要预览服务器）
 
 ## 许可证
 

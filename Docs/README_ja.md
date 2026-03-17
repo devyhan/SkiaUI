@@ -14,6 +14,8 @@ SwiftUIスタイルのコードを書き、HTML `<canvas>` 上にピクセル単
 > SkiaUIは現在**実験段階**です。APIは不安定であり、予告なく変更される可能性があります。本番環境での使用は推奨しません。
 
 ```swift
+import SkiaUI
+
 struct CounterView: View {
     @State private var count = 0
 
@@ -117,6 +119,61 @@ swift build
 swift test
 ```
 
+### クイックスタート (WASM)
+
+WebAssemblyでSkiaUIアプリをブラウザに直接デプロイする5ステップ:
+
+**1. Swift WASM SDKをインストール**
+
+```bash
+swift sdk install https://download.swift.org/swift-6.2.4-release/wasm-sdk/swift-6.2.4-RELEASE/swift-6.2.4-RELEASE_wasm.artifactbundle.tar.gz
+```
+
+**2. サンプルプロジェクトをコピー**
+
+```bash
+cp -r Examples/BasicApp ~/MySkiaUIApp
+cd ~/MySkiaUIApp
+```
+
+**3. `Sources/App.swift`を編集**
+
+```swift
+import SkiaUI
+import SkiaUIWebBridge
+
+@main
+struct BasicApp: SkiaUI.App {
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Hello, SkiaUI!")
+                .fontSize(28)
+                .bold()
+        }
+    }
+
+    static func main() {
+        WebBridge.start(BasicApp.self)
+    }
+}
+```
+
+**4. ビルド**
+
+```bash
+./build.sh
+```
+
+**5. サーバーを起動して開く**
+
+```bash
+npx serve dist    # または: python3 -m http.server -d dist
+```
+
+ブラウザで `http://localhost:3000` を開きます。
+
+> 完全なサンプルプロジェクトは [`Examples/BasicApp/`](../Examples/BasicApp/) を参照してください。
+
 ## サーバー統合
 
 SkiaUIはサーバー（例：Vapor）で実行し、バイナリディスプレイリストをHTTPでブラウザクライアントにストリーミングできます。
@@ -183,7 +240,6 @@ player.play(buffer, canvas);
 - キーボード入力とフォーカス管理未対応
 - 画像ロードとレンダリング未対応
 - アニメーションとトランジション未対応
-- WebAssembly直接デプロイ未対応（プレビューサーバー必要）
 
 ## ライセンス
 

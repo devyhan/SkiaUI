@@ -119,6 +119,61 @@ swift build
 swift test
 ```
 
+### Quick Start (WASM)
+
+Deploy a SkiaUI app directly to the browser via WebAssembly in 5 steps:
+
+**1. Install the Swift WASM SDK**
+
+```bash
+swift sdk install https://download.swift.org/swift-6.2.4-release/wasm-sdk/swift-6.2.4-RELEASE/swift-6.2.4-RELEASE_wasm.artifactbundle.tar.gz
+```
+
+**2. Copy the example project**
+
+```bash
+cp -r Examples/BasicApp ~/MySkiaUIApp
+cd ~/MySkiaUIApp
+```
+
+**3. Edit `Sources/App.swift`**
+
+```swift
+import SkiaUI
+import SkiaUIWebBridge
+
+@main
+struct BasicApp: SkiaUI.App {
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Hello, SkiaUI!")
+                .fontSize(28)
+                .bold()
+        }
+    }
+
+    static func main() {
+        WebBridge.start(BasicApp.self)
+    }
+}
+```
+
+**4. Build**
+
+```bash
+./build.sh
+```
+
+**5. Serve and open**
+
+```bash
+npx serve dist    # or: python3 -m http.server -d dist
+```
+
+Open `http://localhost:3000` in your browser.
+
+> See [`Examples/BasicApp/`](Examples/BasicApp/) for the complete example project.
+
 ## Server Integration
 
 SkiaUI can run on a server (e.g. Vapor) and stream binary display lists to a browser client over HTTP.
@@ -185,7 +240,6 @@ player.play(buffer, canvas);
 - No keyboard input or focus management
 - No image loading or rendering
 - No animation or transition support
-- WebAssembly direct deployment is not yet supported (preview server required)
 
 ## License
 
