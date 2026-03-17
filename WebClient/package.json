@@ -1,0 +1,11 @@
+{
+  "name": "skiaui-webclient",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "canvaskit-wasm": "latest"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}

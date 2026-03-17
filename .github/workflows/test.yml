@@ -30,9 +30,9 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm
 
-      - name: Install WebHost dependencies
+      - name: Install WebClient dependencies
         run: pnpm install
-        working-directory: WebHost
+        working-directory: WebClient
 
       - name: Run tests
         run: swift test

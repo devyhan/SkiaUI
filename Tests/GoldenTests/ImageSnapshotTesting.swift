@@ -27,9 +27,9 @@ func assertImageSnapshot<V: View>(
         .deletingLastPathComponent()
         .deletingLastPathComponent()
     let renderScript = projectRoot
-        .appendingPathComponent("WebHost/scripts/render.mjs").path
-    let webHostDir = projectRoot
-        .appendingPathComponent("WebHost").path
+        .appendingPathComponent("WebClient/scripts/render.mjs").path
+    let webClientDir = projectRoot
+        .appendingPathComponent("WebClient").path
     let snapshotsDir = goldenTestsDir
         .appendingPathComponent("__snapshots__")
 
@@ -42,14 +42,14 @@ func assertImageSnapshot<V: View>(
     let nodeResult = runNodeRenderer(
         binary: binary,
         renderScript: renderScript,
-        workingDirectory: webHostDir,
+        workingDirectory: webClientDir,
         width: Int(width),
         height: Int(height)
     )
 
     guard let pngData = nodeResult else {
         Issue.record(
-            "Node.js renderer failed — is Node.js installed and are WebHost dependencies available? Run: cd WebHost && pnpm install",
+            "Node.js renderer failed — is Node.js installed and are WebClient dependencies available? Run: cd WebClient && pnpm install",
             sourceLocation: sourceLocation
         )
         return
