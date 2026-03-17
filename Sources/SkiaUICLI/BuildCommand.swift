@@ -13,6 +13,9 @@ struct BuildCommand: ParsableCommand {
     @Option(name: .long, help: "WASM SDK identifier (auto-detected if omitted).")
     var swiftSdk: String?
 
+    @Option(name: .long, help: "Toolchain identifier to use (auto-detected from SDK if omitted).")
+    var toolchain: String?
+
     func run() throws {
         let productName: String
         if let explicit = product {
@@ -30,6 +33,16 @@ struct BuildCommand: ParsableCommand {
             print("Detected WASM SDK: \(sdk)")
         }
 
+        // Resolve toolchain: explicit > auto-detect from SDK > none
+        var env: [String: String]? = nil
+        if let explicit = toolchain {
+            env = ["TOOLCHAINS": explicit]
+            print("Using toolchain: \(explicit)")
+        } else if let identifier = detectToolchainIdentifier(for: sdk) {
+            env = ["TOOLCHAINS": identifier]
+            print("Detected toolchain: \(identifier)")
+        }
+
         print("Building \(productName) for WebAssembly...")
         try shellExec(
             "/usr/bin/env",
@@ -39,7 +52,8 @@ struct BuildCommand: ParsableCommand {
                 "js",
                 "--product", productName,
                 "-c", "release",
-            ]
+            ],
+            environment: env
         )
 
         // Create dist/ directory

@@ -277,6 +277,24 @@ enum Templates {
       echo "Detected WASM SDK: $SDK"
     fi
 
+    # Auto-detect matching toolchain (override with: TOOLCHAINS=org.swift.xxx ./build.sh)
+    if [ -z "${TOOLCHAINS:-}" ]; then
+      SDK_VERSION=$(echo "$SDK" | sed -n 's/swift-\\([0-9.]*\\)-.*/\\1/p')
+      if [ -n "$SDK_VERSION" ]; then
+        for dir in "$HOME/Library/Developer/Toolchains" "/Library/Developer/Toolchains"; do
+          PLIST="$dir/swift-${SDK_VERSION}-RELEASE.xctoolchain/Info.plist"
+          if [ -f "$PLIST" ]; then
+            TOOLCHAINS=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLIST" 2>/dev/null || true)
+            break
+          fi
+        done
+        if [ -n "${TOOLCHAINS:-}" ]; then
+          export TOOLCHAINS
+          echo "Detected toolchain: $TOOLCHAINS"
+        fi
+      fi
+    fi
+
     # Build the WASM binary
     swift package --swift-sdk "$SDK" js --product App -c release
 

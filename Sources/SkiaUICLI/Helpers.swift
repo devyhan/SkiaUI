@@ -5,13 +5,19 @@ import Foundation
 func shellExec(
     _ executablePath: String,
     arguments: [String],
-    currentDirectory: URL? = nil
+    currentDirectory: URL? = nil,
+    environment: [String: String]? = nil
 ) throws -> Int32 {
     let process = Process()
     process.executableURL = URL(fileURLWithPath: executablePath)
     process.arguments = arguments
     if let dir = currentDirectory {
         process.currentDirectoryURL = dir
+    }
+    if let env = environment {
+        var merged = ProcessInfo.processInfo.environment
+        for (key, value) in env { merged[key] = value }
+        process.environment = merged
     }
     process.standardOutput = FileHandle.standardOutput
     process.standardError = FileHandle.standardError
@@ -116,4 +122,35 @@ func detectWasmSDK() throws -> String {
 
     // Fallback: pick the last (most recent) entry
     return candidates.last!
+}
+
+/// Extracts the version string from a WASM SDK name.
+/// e.g. "swift-6.2.4-RELEASE_wasm" → "6.2.4"
+func extractVersion(from sdk: String) -> String? {
+    let pattern = #/swift-(\d+\.\d+(?:\.\d+)?)-/#
+    guard let match = sdk.firstMatch(of: pattern) else { return nil }
+    return String(match.1)
+}
+
+/// Finds a matching toolchain's CFBundleIdentifier for the given SDK version.
+/// Searches both system and user toolchain directories.
+func detectToolchainIdentifier(for sdk: String) -> String? {
+    guard let version = extractVersion(from: sdk) else { return nil }
+
+    let toolchainName = "swift-\(version)-RELEASE.xctoolchain"
+    let searchPaths = [
+        NSHomeDirectory() + "/Library/Developer/Toolchains/" + toolchainName,
+        "/Library/Developer/Toolchains/" + toolchainName,
+    ]
+
+    for path in searchPaths {
+        let plistPath = path + "/Info.plist"
+        guard FileManager.default.fileExists(atPath: plistPath),
+              let data = FileManager.default.contents(atPath: plistPath),
+              let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
+              let identifier = plist["CFBundleIdentifier"] as? String
+        else { continue }
+        return identifier
+    }
+    return nil
 }
