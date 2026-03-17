@@ -57,6 +57,7 @@ func detectProductName() throws -> String {
 enum DetectionError: Error, CustomStringConvertible {
     case noExecutableTarget
     case noWasmSDK
+    case toolchainInstallFailed(version: String)
 
     var description: String {
         switch self {
@@ -64,6 +65,8 @@ enum DetectionError: Error, CustomStringConvertible {
             return "No executableTarget found in Package.swift. Use --product to specify one."
         case .noWasmSDK:
             return "No WASM SDK found. Install one with: swift sdk install <url>"
+        case .toolchainInstallFailed(let version):
+            return "Failed to install Swift \(version) toolchain. Please install manually from https://swift.org/install"
         }
     }
 }
@@ -132,11 +135,25 @@ func extractVersion(from sdk: String) -> String? {
     return String(match.1)
 }
 
+/// Detects the current Swift compiler version (e.g. "6.2" or "6.2.4").
+func detectSwiftVersion() -> String? {
+    guard let output = try? shellOutput("/usr/bin/env", arguments: ["swift", "--version"]) else {
+        return nil
+    }
+    let pattern = #/Swift version (\d+\.\d+(?:\.\d+)?)/#
+    guard let match = output.firstMatch(of: pattern) else { return nil }
+    return String(match.1)
+}
+
 /// Finds a matching toolchain's CFBundleIdentifier for the given SDK version.
 /// Searches both system and user toolchain directories.
 func detectToolchainIdentifier(for sdk: String) -> String? {
     guard let version = extractVersion(from: sdk) else { return nil }
+    return findToolchainIdentifier(version: version)
+}
 
+/// Searches for an xctoolchain bundle by version and returns its CFBundleIdentifier.
+func findToolchainIdentifier(version: String) -> String? {
     let toolchainName = "swift-\(version)-RELEASE.xctoolchain"
     let searchPaths = [
         NSHomeDirectory() + "/Library/Developer/Toolchains/" + toolchainName,
@@ -153,4 +170,48 @@ func detectToolchainIdentifier(for sdk: String) -> String? {
         return identifier
     }
     return nil
+}
+
+/// Downloads and installs a Swift toolchain using the macOS installer.
+/// Installs to /Library/Developer/Toolchains/ (requires administrator privileges).
+func installMatchingToolchain(version: String) throws {
+    let fm = FileManager.default
+    let toolchainName = "swift-\(version)-RELEASE.xctoolchain"
+
+    // Skip if already installed (check both user and system paths)
+    let checkPaths = [
+        NSHomeDirectory() + "/Library/Developer/Toolchains/" + toolchainName,
+        "/Library/Developer/Toolchains/" + toolchainName,
+    ]
+    for path in checkPaths {
+        if fm.fileExists(atPath: path) { return }
+    }
+
+    let url = "https://download.swift.org/swift-\(version)-release/xcode/swift-\(version)-RELEASE/swift-\(version)-RELEASE-osx.pkg"
+    let tmpDir = NSTemporaryDirectory() + "skiaui-toolchain-\(version)"
+    let pkgPath = tmpDir + "/swift.pkg"
+
+    defer {
+        try? fm.removeItem(atPath: tmpDir)
+    }
+
+    try fm.createDirectory(atPath: tmpDir, withIntermediateDirectories: true)
+
+    print("")
+    print("Swift compiler (\(detectSwiftVersion() ?? "unknown")) does not match WASM SDK (\(version)).")
+    print("Auto-installing Swift \(version) toolchain...")
+    print("")
+
+    try shellExec("/usr/bin/curl", arguments: [
+        "-f", "-L", "--progress-bar",
+        "-o", pkgPath, url,
+    ])
+
+    print("Installing toolchain (administrator password may be required)...")
+    try shellExec("/usr/bin/sudo", arguments: [
+        "/usr/sbin/installer", "-pkg", pkgPath, "-target", "/",
+    ])
+
+    print("Installed Swift \(version) toolchain.")
+    print("")
 }

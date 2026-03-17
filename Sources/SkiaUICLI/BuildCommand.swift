@@ -43,6 +43,20 @@ struct BuildCommand: ParsableCommand {
             print("Detected toolchain: \(identifier)")
         }
 
+        // Auto-install matching toolchain if compiler/SDK versions mismatch
+        if env == nil, let sdkVersion = extractVersion(from: sdk) {
+            if let compilerVersion = detectSwiftVersion(), sdkVersion != compilerVersion {
+                try installMatchingToolchain(version: sdkVersion)
+
+                if let identifier = findToolchainIdentifier(version: sdkVersion) {
+                    env = ["TOOLCHAINS": identifier]
+                    print("Using installed toolchain: \(identifier)")
+                } else {
+                    throw DetectionError.toolchainInstallFailed(version: sdkVersion)
+                }
+            }
+        }
+
         print("Building \(productName) for WebAssembly...")
         try shellExec(
             "/usr/bin/env",
