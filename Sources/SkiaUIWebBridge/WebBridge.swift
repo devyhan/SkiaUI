@@ -29,9 +29,14 @@ public struct WebBridge {
         let height = Float(viewport.height.number ?? 600)
         host.setViewport(width: width, height: height)
 
-        // Register tap handler bridge
+        // Register tap handler bridge (receives click coordinates, performs hit test)
         skiaUI.handleTap = .object(JSClosure { args in
-            if let tapID = args.first?.number.map({ Int($0) }) {
+            guard args.count >= 2,
+                  let x = args[0].number.map({ Float($0) }),
+                  let y = args[1].number.map({ Float($0) }) else {
+                return .undefined
+            }
+            if let tapID = host.hitTest(x: x, y: y) {
                 host.handleTap(id: tapID)
             }
             return .undefined
