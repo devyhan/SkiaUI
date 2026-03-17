@@ -1,12 +1,10 @@
-name: Deploy Docs + WASM
+name: Deploy Docs
 
 on:
   push:
     branches: [main]
     paths:
-      - 'Sources/**'
       - 'Docs/**'
-      - 'DocsHost/**'
       - '.github/workflows/deploy-docs-wasm.yml'
   workflow_dispatch:
 
@@ -25,58 +23,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Install SwiftWasm toolchain
-      - name: Install SwiftWasm
-        run: |
-          SWIFT_TAG="swift-wasm-6.0.2-RELEASE"
-          SWIFT_URL="https://github.com/nicklimmm/JavaScriptKit/releases/download/${SWIFT_TAG}/${SWIFT_TAG}-ubuntu22.04_aarch64.tar.gz"
-          wget -q "$SWIFT_URL" -O swift-wasm.tar.gz || echo "SwiftWasm download skipped (URL may need updating)"
-          if [ -f swift-wasm.tar.gz ]; then
-            sudo tar xzf swift-wasm.tar.gz -C /opt
-            echo "/opt/${SWIFT_TAG}/usr/bin" >> $GITHUB_PATH
-          fi
-
-      # Build WASM binary (if SwiftWasm is available)
-      - name: Build WASM
-        continue-on-error: true
-        run: |
-          if command -v swift &> /dev/null; then
-            swift build --product SkiaUIDocsSite --triple wasm32-unknown-wasi 2>&1 || echo "WASM build skipped"
-          fi
-
-      # Build DocsHost
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install pnpm
-        run: npm install -g pnpm
-
-      - name: Build DocsHost
-        working-directory: DocsHost
-        continue-on-error: true
-        run: |
-          pnpm install
-          pnpm build
-
       # Assemble site
       - name: Assemble site
         run: |
           mkdir -p _site
-          # Copy Docsify docs
           cp -r Docs/* _site/
-          # Copy DocsHost build output as /demos/
-          mkdir -p _site/demos
-          if [ -d DocsHost/dist ]; then
-            cp -r DocsHost/dist/* _site/demos/
-          fi
-          # Copy WASM binary if built
-          WASM_PATH=".build/wasm32-unknown-wasi/debug/SkiaUIDocsSite.wasm"
-          if [ -f "$WASM_PATH" ]; then
-            cp "$WASM_PATH" _site/demos/SkiaUIDocsSite.wasm
-          fi
-          # Add .nojekyll for GitHub Pages
           touch _site/.nojekyll
 
       - name: Upload Pages artifact

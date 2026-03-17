@@ -116,12 +116,6 @@ let package = Package(
             dependencies: ["SkiaUIDSL", "SkiaUIState", "SkiaUIRuntime"]
         ),
 
-        // MARK: - Docs Site (WASM demo app)
-        .executableTarget(
-            name: "SkiaUIDocsSite",
-            dependencies: ["SkiaUI", "SkiaUIWebBridge"]
-        ),
-
         // MARK: - Tests
         .testTarget(
             name: "SkiaUIDSLTests",
