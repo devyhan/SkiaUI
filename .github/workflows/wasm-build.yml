@@ -26,8 +26,7 @@ jobs:
           echo "/opt/${SWIFT_VERSION}-ubuntu24.04/usr/bin" >> $GITHUB_PATH
 
       - name: Install Swift SDK for WebAssembly
-        run: swift sdk install https://github.com/nicklimmm/JavaScriptKit/releases/download/swift-6.2-wasm-sdk/swift-wasm32-unknown-wasip1.artifactbundle.tar.gz 2>/dev/null || echo "SDK install skipped (verify URL when activating WASM builds)"
+        run: swift sdk install https://download.swift.org/swift-6.2.4-release/wasm-sdk/swift-6.2.4-RELEASE/swift-6.2.4-RELEASE_wasm.artifactbundle.tar.gz
 
       - name: Build for WASM
-        run: |
-          swift build --swift-sdk wasm32-unknown-wasip1 2>/dev/null || echo "WASM build requires JavaScriptKit dependency to be uncommented in Package.swift"
+        run: swift package --swift-sdk wasm32-unknown-wasip1 js -c debug
