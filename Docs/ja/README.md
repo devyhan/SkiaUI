@@ -300,6 +300,64 @@ swift build
 swift test
 ```
 
+## サーバー統合
+
+SkiaUIはサーバー（例：[Vapor](https://vapor.codes)）でパッケージ依存として使用できます。サーバーが完全なレンダリングパイプラインを実行し、結果の`[UInt8]`バイナリをHTTPで送信します。ブラウザクライアントはそのバイナリをfetchし、`DisplayListPlayer`で`<canvas>`上に再生します。
+
+### 1. 依存関係の追加
+
+```swift
+// Package.swift
+dependencies: [
+    .package(url: "https://github.com/devyhan/SkiaUI.git", branch: "main")
+],
+targets: [
+    .executableTarget(name: "MyApp", dependencies: [
+        .product(name: "SkiaUI", package: "SkiaUI")
+    ])
+]
+```
+
+### 2. Viewのレンダリング
+
+```swift
+import SkiaUI
+
+let host = RootHost()
+host.setViewport(width: 800, height: 600)
+
+var bytes: [UInt8] = []
+host.setOnDisplayList { bytes = $0 }
+host.render(CounterView())
+// `bytes`にバイナリディスプレイリストが格納される
+```
+
+### 3. HTTP配信
+
+```swift
+// Vaporの例
+app.get("display-list") { req -> Response in
+    var bytes: [UInt8] = []
+    host.setOnDisplayList { bytes = $0 }
+    host.render(MyView())
+    return Response(
+        status: .ok,
+        headers: ["Content-Type": "application/octet-stream"],
+        body: .init(data: Data(bytes))
+    )
+}
+```
+
+### 4. ブラウザクライアント
+
+`WebClient/`の静的ファイルをサーバーのpublicディレクトリにコピーし、fetchして再生します：
+
+```js
+const resp = await fetch('/display-list');
+const buffer = await resp.arrayBuffer();
+player.play(buffer, canvas);
+```
+
 ## プロジェクト状態
 
 SkiaUIは初期開発段階です。

@@ -294,6 +294,64 @@ swift build
 swift test
 ```
 
+## 服务器集成
+
+SkiaUI可以在服务器（如[Vapor](https://vapor.codes)）中作为包依赖使用。服务器执行完整的渲染管线，并通过HTTP发送结果`[UInt8]`二进制数据。浏览器客户端fetch该二进制数据，并通过`DisplayListPlayer`在`<canvas>`上回放。
+
+### 1. 添加依赖
+
+```swift
+// Package.swift
+dependencies: [
+    .package(url: "https://github.com/devyhan/SkiaUI.git", branch: "main")
+],
+targets: [
+    .executableTarget(name: "MyApp", dependencies: [
+        .product(name: "SkiaUI", package: "SkiaUI")
+    ])
+]
+```
+
+### 2. 渲染View
+
+```swift
+import SkiaUI
+
+let host = RootHost()
+host.setViewport(width: 800, height: 600)
+
+var bytes: [UInt8] = []
+host.setOnDisplayList { bytes = $0 }
+host.render(CounterView())
+// `bytes` 现在包含二进制显示列表
+```
+
+### 3. 通过HTTP提供
+
+```swift
+// Vapor示例
+app.get("display-list") { req -> Response in
+    var bytes: [UInt8] = []
+    host.setOnDisplayList { bytes = $0 }
+    host.render(MyView())
+    return Response(
+        status: .ok,
+        headers: ["Content-Type": "application/octet-stream"],
+        body: .init(data: Data(bytes))
+    )
+}
+```
+
+### 4. 浏览器客户端
+
+将`WebClient/`静态文件复制到服务器的public目录，然后fetch并回放：
+
+```js
+const resp = await fetch('/display-list');
+const buffer = await resp.arrayBuffer();
+player.play(buffer, canvas);
+```
+
 ## 项目状态
 
 SkiaUI处于早期开发阶段。

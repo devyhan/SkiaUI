@@ -119,6 +119,64 @@ swift build
 swift test
 ```
 
+## Server Integration
+
+SkiaUI can run on a server (e.g. Vapor) and stream binary display lists to a browser client over HTTP.
+
+**1. Add Dependency**
+
+```swift
+// Package.swift
+dependencies: [
+    .package(url: "https://github.com/devyhan/SkiaUI.git", branch: "main")
+],
+targets: [
+    .executableTarget(name: "MyApp", dependencies: [
+        .product(name: "SkiaUI", package: "SkiaUI")
+    ])
+]
+```
+
+**2. Render a View**
+
+```swift
+import SkiaUI
+
+let host = RootHost()
+host.setViewport(width: 800, height: 600)
+
+var bytes: [UInt8] = []
+host.setOnDisplayList { bytes = $0 }
+host.render(CounterView())
+// `bytes` now contains the binary display list
+```
+
+**3. Serve via HTTP**
+
+```swift
+// Vapor example
+app.get("display-list") { req -> Response in
+    var bytes: [UInt8] = []
+    host.setOnDisplayList { bytes = $0 }
+    host.render(MyView())
+    return Response(
+        status: .ok,
+        headers: ["Content-Type": "application/octet-stream"],
+        body: .init(data: Data(bytes))
+    )
+}
+```
+
+**4. Browser Client**
+
+Copy `WebClient/` static files to your server's public directory, then fetch and replay:
+
+```js
+const resp = await fetch('/display-list');
+const buffer = await resp.arrayBuffer();
+player.play(buffer, canvas);
+```
+
 ## Known Limitations
 
 - Text rendering relies on estimated glyph widths (`fontSize × 0.6 × charCount`), not real font metrics

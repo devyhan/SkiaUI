@@ -117,6 +117,64 @@ swift build
 swift test
 ```
 
+## 서버 통합
+
+SkiaUI는 서버(예: Vapor)에서 실행하고 바이너리 디스플레이 리스트를 HTTP로 브라우저 클라이언트에 전송할 수 있습니다.
+
+**1. 의존성 추가**
+
+```swift
+// Package.swift
+dependencies: [
+    .package(url: "https://github.com/devyhan/SkiaUI.git", branch: "main")
+],
+targets: [
+    .executableTarget(name: "MyApp", dependencies: [
+        .product(name: "SkiaUI", package: "SkiaUI")
+    ])
+]
+```
+
+**2. View 렌더링**
+
+```swift
+import SkiaUI
+
+let host = RootHost()
+host.setViewport(width: 800, height: 600)
+
+var bytes: [UInt8] = []
+host.setOnDisplayList { bytes = $0 }
+host.render(CounterView())
+// `bytes`에 바이너리 디스플레이 리스트가 저장됨
+```
+
+**3. HTTP로 제공**
+
+```swift
+// Vapor 예시
+app.get("display-list") { req -> Response in
+    var bytes: [UInt8] = []
+    host.setOnDisplayList { bytes = $0 }
+    host.render(MyView())
+    return Response(
+        status: .ok,
+        headers: ["Content-Type": "application/octet-stream"],
+        body: .init(data: Data(bytes))
+    )
+}
+```
+
+**4. 브라우저 클라이언트**
+
+`WebClient/` 정적 파일을 서버의 public 디렉토리에 복사한 후 fetch하여 재생합니다:
+
+```js
+const resp = await fetch('/display-list');
+const buffer = await resp.arrayBuffer();
+player.play(buffer, canvas);
+```
+
 ## 알려진 제약사항
 
 - 텍스트 렌더링은 실제 폰트 메트릭이 아닌 추정 글리프 폭(`fontSize × 0.6 × 글자수`)에 의존

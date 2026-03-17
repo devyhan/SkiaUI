@@ -508,6 +508,114 @@ swift build
 swift test
 ```
 
+## Server Integration
+
+SkiaUI can be used as a package dependency in a standalone server (e.g. [Vapor](https://vapor.codes)). The server runs the full rendering pipeline — DSL, layout, render tree, display list encoding — and sends the resulting `[UInt8]` binary over HTTP. A browser client fetches that binary and replays it on a `<canvas>` via `DisplayListPlayer`.
+
+```text
+Server (Swift)                        Browser (JS)
+┌─────────────────────┐               ┌──────────────────────┐
+│ RootHost.render()   │               │ fetch('/display-list')│
+│   → Element Tree    │               │   → ArrayBuffer       │
+│   → Layout Engine   │  HTTP binary  │   → DisplayListPlayer │
+│   → Render Tree     │──────────────→│     .play(buf, canvas)│
+│   → CommandEncoder  │  octet-stream │   → CanvasKit draws   │
+│   → [UInt8]         │               │                       │
+└─────────────────────┘               └──────────────────────┘
+```
+
+### 1. Add Dependency
+
+```swift
+// Package.swift
+dependencies: [
+    .package(url: "https://github.com/devyhan/SkiaUI.git", branch: "main")
+],
+targets: [
+    .executableTarget(name: "MyApp", dependencies: [
+        .product(name: "SkiaUI", package: "SkiaUI")
+    ])
+]
+```
+
+`SkiaUI` is the umbrella module — it re-exports `SkiaUIDSL`, `SkiaUIState`, and `SkiaUIRuntime`. No need to import sub-modules individually.
+
+### 2. Render a View
+
+```swift
+import SkiaUI
+
+let host = RootHost()
+host.setViewport(width: 800, height: 600)
+
+var bytes: [UInt8] = []
+host.setOnDisplayList { bytes = $0 }
+host.render(CounterView())
+// `bytes` now contains the binary display list
+```
+
+Key APIs:
+
+| Method | Purpose |
+| ------ | ------- |
+| `RootHost()` | Creates a host that orchestrates the full rendering pipeline |
+| `setViewport(width:height:)` | Sets the canvas dimensions for layout |
+| `setOnDisplayList(_:)` | Registers a callback that receives the encoded `[UInt8]` |
+| `render(_:)` | Executes View → Element → Layout → RenderTree → DisplayList → binary |
+
+### 3. Serve via HTTP
+
+```swift
+// Vapor example
+import Vapor
+
+let host = RootHost()
+host.setViewport(width: 800, height: 600)
+
+app.get("display-list") { req -> Response in
+    var bytes: [UInt8] = []
+    host.setOnDisplayList { bytes = $0 }
+    host.render(MyView())
+    return Response(
+        status: .ok,
+        headers: ["Content-Type": "application/octet-stream"],
+        body: .init(data: Data(bytes))
+    )
+}
+```
+
+The response is raw binary — no JSON, no Base64. The browser reads it directly as an `ArrayBuffer`.
+
+### 4. Browser Client
+
+Copy `WebClient/` static files (`displayListPlayer.ts`, `canvaskitBackend.ts`, etc.) to your server's public directory. Then fetch and replay:
+
+```html
+<canvas id="skia-canvas" width="800" height="600"></canvas>
+<script type="module">
+  import CanvasKitInit from './canvaskit.js';
+  import { DisplayListPlayer } from './displayListPlayer.js';
+  import { FontManager } from './fontManager.js';
+  import { ImageCache } from './imageCache.js';
+
+  const ck = await CanvasKitInit();
+  const surface = ck.MakeCanvasSurface('skia-canvas');
+  const fontManager = new FontManager(ck);
+  const imageCache = new ImageCache(ck);
+  const player = new DisplayListPlayer(ck, fontManager, imageCache);
+
+  const resp = await fetch('/display-list');
+  const buffer = await resp.arrayBuffer();
+
+  const canvas = surface.getCanvas();
+  canvas.clear(ck.WHITE);
+  player.play(buffer, canvas);
+  surface.flush();
+</script>
+```
+
+`DisplayListPlayer.play(buffer, canvas)` reads the binary format directly from the `ArrayBuffer` and maps opcodes to CanvasKit calls — zero object marshalling, zero JSON parsing.
+
 ## Project Status
 
 SkiaUI is in early development. The current implementation covers:

@@ -117,6 +117,64 @@ swift build
 swift test
 ```
 
+## 服务器集成
+
+SkiaUI可以在服务器（如Vapor）上运行，并通过HTTP将二进制显示列表流式传输到浏览器客户端。
+
+**1. 添加依赖**
+
+```swift
+// Package.swift
+dependencies: [
+    .package(url: "https://github.com/devyhan/SkiaUI.git", branch: "main")
+],
+targets: [
+    .executableTarget(name: "MyApp", dependencies: [
+        .product(name: "SkiaUI", package: "SkiaUI")
+    ])
+]
+```
+
+**2. 渲染View**
+
+```swift
+import SkiaUI
+
+let host = RootHost()
+host.setViewport(width: 800, height: 600)
+
+var bytes: [UInt8] = []
+host.setOnDisplayList { bytes = $0 }
+host.render(CounterView())
+// `bytes` 现在包含二进制显示列表
+```
+
+**3. 通过HTTP提供**
+
+```swift
+// Vapor示例
+app.get("display-list") { req -> Response in
+    var bytes: [UInt8] = []
+    host.setOnDisplayList { bytes = $0 }
+    host.render(MyView())
+    return Response(
+        status: .ok,
+        headers: ["Content-Type": "application/octet-stream"],
+        body: .init(data: Data(bytes))
+    )
+}
+```
+
+**4. 浏览器客户端**
+
+将`WebClient/`静态文件复制到服务器的public目录，然后fetch并回放：
+
+```js
+const resp = await fetch('/display-list');
+const buffer = await resp.arrayBuffer();
+player.play(buffer, canvas);
+```
+
 ## 已知限制
 
 - 文本渲染依赖估算字形宽度（`fontSize × 0.6 × 字符数`），而非真实字体度量

@@ -523,6 +523,114 @@ swift build
 swift test
 ```
 
+## 서버 통합
+
+SkiaUI는 독립 서버(예: [Vapor](https://vapor.codes))에서 패키지 종속성으로 사용할 수 있습니다. 서버가 전체 렌더링 파이프라인(DSL → 레이아웃 → 렌더 트리 → 디스플레이 리스트 인코딩)을 실행하고, 결과 `[UInt8]` 바이너리를 HTTP로 전송합니다. 브라우저 클라이언트는 이 바이너리를 fetch하여 `DisplayListPlayer`로 `<canvas>` 위에 재생합니다.
+
+```text
+서버 (Swift)                          브라우저 (JS)
+┌─────────────────────┐               ┌──────────────────────┐
+│ RootHost.render()   │               │ fetch('/display-list')│
+│   → Element Tree    │               │   → ArrayBuffer       │
+│   → Layout Engine   │  HTTP binary  │   → DisplayListPlayer │
+│   → Render Tree     │──────────────→│     .play(buf, canvas)│
+│   → CommandEncoder  │  octet-stream │   → CanvasKit 드로잉  │
+│   → [UInt8]         │               │                       │
+└─────────────────────┘               └──────────────────────┘
+```
+
+### 1. 의존성 추가
+
+```swift
+// Package.swift
+dependencies: [
+    .package(url: "https://github.com/devyhan/SkiaUI.git", branch: "main")
+],
+targets: [
+    .executableTarget(name: "MyApp", dependencies: [
+        .product(name: "SkiaUI", package: "SkiaUI")
+    ])
+]
+```
+
+`SkiaUI`는 엄브렐라 모듈로 `SkiaUIDSL`, `SkiaUIState`, `SkiaUIRuntime`을 재내보냅니다. 하위 모듈을 개별적으로 import할 필요가 없습니다.
+
+### 2. View 렌더링
+
+```swift
+import SkiaUI
+
+let host = RootHost()
+host.setViewport(width: 800, height: 600)
+
+var bytes: [UInt8] = []
+host.setOnDisplayList { bytes = $0 }
+host.render(CounterView())
+// `bytes`에 바이너리 디스플레이 리스트가 저장됨
+```
+
+주요 API:
+
+| 메서드 | 용도 |
+| ------ | ---- |
+| `RootHost()` | 전체 렌더링 파이프라인을 조율하는 호스트 생성 |
+| `setViewport(width:height:)` | 레이아웃용 캔버스 크기 설정 |
+| `setOnDisplayList(_:)` | 인코딩된 `[UInt8]`을 수신하는 콜백 등록 |
+| `render(_:)` | View → Element → Layout → RenderTree → DisplayList → binary 실행 |
+
+### 3. HTTP로 제공
+
+```swift
+// Vapor 예시
+import Vapor
+
+let host = RootHost()
+host.setViewport(width: 800, height: 600)
+
+app.get("display-list") { req -> Response in
+    var bytes: [UInt8] = []
+    host.setOnDisplayList { bytes = $0 }
+    host.render(MyView())
+    return Response(
+        status: .ok,
+        headers: ["Content-Type": "application/octet-stream"],
+        body: .init(data: Data(bytes))
+    )
+}
+```
+
+응답은 순수 바이너리입니다 — JSON 없음, Base64 없음. 브라우저에서 `ArrayBuffer`로 직접 읽습니다.
+
+### 4. 브라우저 클라이언트
+
+`WebClient/` 정적 파일(`displayListPlayer.ts`, `canvaskitBackend.ts` 등)을 서버의 public 디렉토리에 복사합니다. 그런 다음 fetch하여 재생합니다:
+
+```html
+<canvas id="skia-canvas" width="800" height="600"></canvas>
+<script type="module">
+  import CanvasKitInit from './canvaskit.js';
+  import { DisplayListPlayer } from './displayListPlayer.js';
+  import { FontManager } from './fontManager.js';
+  import { ImageCache } from './imageCache.js';
+
+  const ck = await CanvasKitInit();
+  const surface = ck.MakeCanvasSurface('skia-canvas');
+  const fontManager = new FontManager(ck);
+  const imageCache = new ImageCache(ck);
+  const player = new DisplayListPlayer(ck, fontManager, imageCache);
+
+  const resp = await fetch('/display-list');
+  const buffer = await resp.arrayBuffer();
+
+  const canvas = surface.getCanvas();
+  canvas.clear(ck.WHITE);
+  player.play(buffer, canvas);
+  surface.flush();
+</script>
+```
+
+`DisplayListPlayer.play(buffer, canvas)`는 `ArrayBuffer`에서 바이너리 포맷을 직접 읽어 opcode를 CanvasKit 호출로 매핑합니다 — 객체 마샬링 없음, JSON 파싱 없음.
+
 ## 프로젝트 상태
 
 SkiaUI는 초기 개발 단계입니다. 현재 구현 범위:
