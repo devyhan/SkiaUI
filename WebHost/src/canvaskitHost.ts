@@ -1,6 +1,7 @@
 import type { CanvasKit, Surface } from "canvaskit-wasm";
 import { DisplayListPlayer } from "./displayListPlayer";
 import { FontManager } from "./fontManager";
+import { ImageCache } from "./imageCache";
 
 export async function start(CanvasKit: CanvasKit): Promise<void> {
   const canvasElement = document.getElementById(
@@ -41,7 +42,8 @@ export async function start(CanvasKit: CanvasKit): Promise<void> {
     fontManager.loadFont("/MonaspaceKrypton-Regular.otf", "Monaspace Krypton"),
   ]);
 
-  const player = new DisplayListPlayer(CanvasKit, fontManager);
+  const imageCache = new ImageCache(CanvasKit);
+  const player = new DisplayListPlayer(CanvasKit, fontManager, imageCache);
   let currentBuffer: ArrayBuffer | null = null;
 
   // Sync viewport with Swift server and get display list
@@ -151,5 +153,111 @@ export async function start(CanvasKit: CanvasKit): Promise<void> {
         currentBuffer = await res.arrayBuffer();
       }
     } catch {}
+  });
+
+  // Long press handler
+  let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+  let pointerStartX = 0;
+  let pointerStartY = 0;
+  let longPressFired = false;
+  let isDragging = false;
+
+  canvasElement.addEventListener("pointerdown", (event: PointerEvent) => {
+    pointerStartX = event.clientX;
+    pointerStartY = event.clientY;
+    longPressFired = false;
+    isDragging = false;
+
+    longPressTimer = setTimeout(async () => {
+      longPressFired = true;
+      try {
+        const res = await fetch("/api/longpress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            x: pointerStartX,
+            y: pointerStartY,
+            viewportWidth: window.innerWidth,
+            viewportHeight: window.innerHeight,
+          }),
+        });
+        if (res.ok) {
+          currentBuffer = await res.arrayBuffer();
+        }
+      } catch {}
+    }, 500);
+
+    canvasElement.setPointerCapture(event.pointerId);
+  });
+
+  canvasElement.addEventListener("pointermove", async (event: PointerEvent) => {
+    const dx = event.clientX - pointerStartX;
+    const dy = event.clientY - pointerStartY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance > 10 && longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+
+    if (distance > 10 && !longPressFired) {
+      isDragging = true;
+      try {
+        const res = await fetch("/api/drag", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phase: "changed",
+            startX: pointerStartX,
+            startY: pointerStartY,
+            currentX: event.clientX,
+            currentY: event.clientY,
+            viewportWidth: window.innerWidth,
+            viewportHeight: window.innerHeight,
+          }),
+        });
+        if (res.ok) {
+          currentBuffer = await res.arrayBuffer();
+        }
+      } catch {}
+    }
+  });
+
+  canvasElement.addEventListener("pointerup", async (event: PointerEvent) => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+
+    if (isDragging) {
+      try {
+        const res = await fetch("/api/drag", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phase: "ended",
+            startX: pointerStartX,
+            startY: pointerStartY,
+            currentX: event.clientX,
+            currentY: event.clientY,
+            viewportWidth: window.innerWidth,
+            viewportHeight: window.innerHeight,
+          }),
+        });
+        if (res.ok) {
+          currentBuffer = await res.arrayBuffer();
+        }
+      } catch {}
+      isDragging = false;
+    }
+  });
+
+  canvasElement.addEventListener("pointercancel", () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    isDragging = false;
+    longPressFired = false;
   });
 }

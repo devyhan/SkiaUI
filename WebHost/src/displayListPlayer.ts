@@ -1,5 +1,6 @@
 import type { CanvasKit, Canvas, Paint } from 'canvaskit-wasm';
 import type { FontManager } from './fontManager';
+import type { ImageCache } from './imageCache';
 
 const OP_SAVE = 1;
 const OP_RESTORE = 2;
@@ -10,17 +11,20 @@ const OP_DRAW_RRECT = 6;
 const OP_DRAW_TEXT = 7;
 const OP_RETAINED_BEGIN = 8;
 const OP_RETAINED_END = 9;
+const OP_DRAW_IMAGE = 10;
 
 export class DisplayListPlayer {
   private ck: CanvasKit;
   private paint: Paint;
   private fontManager: FontManager;
+  private imageCache: ImageCache;
 
-  constructor(ck: CanvasKit, fontManager: FontManager) {
+  constructor(ck: CanvasKit, fontManager: FontManager, imageCache: ImageCache) {
     this.ck = ck;
     this.paint = new ck.Paint();
     this.paint.setAntiAlias(true);
     this.fontManager = fontManager;
+    this.imageCache = imageCache;
   }
 
   play(buffer: ArrayBuffer, canvas: Canvas): void {
@@ -101,19 +105,59 @@ export class DisplayListPlayer {
             offset += familyLen;
             fontFamily = new TextDecoder().decode(familyBytes);
           }
+          // Decode lineLimit and lineBreakMode (Int32 each, 0 = unlimited/wordWrap)
+          const lineLimit = readInt32();
+          const _lineBreakMode = readInt32();
           this.setColor(color);
 
           const typeface = this.fontManager.getTypeface(fontFamily);
           const font = new this.ck.Font(typeface, fontSize);
-          let drawX = x;
-          if (boundsWidth > 0) {
-            const ids = font.getGlyphIDs(text);
-            const widths = font.getGlyphWidths(ids);
-            const actualWidth = widths.reduce((sum: number, w: number) => sum + w, 0);
-            drawX = (boundsWidth - actualWidth) / 2;
+
+          if (lineLimit > 1 && boundsWidth > 0) {
+            // Multiline text rendering using manual line wrapping
+            const lineHeight = fontSize * 1.2;
+            const lines = this.wrapText(text, font, boundsWidth);
+            const effectiveLines = lines.slice(0, lineLimit > 0 ? lineLimit : lines.length);
+            for (let ln = 0; ln < effectiveLines.length; ln++) {
+              const lineY = y + ln * lineHeight;
+              canvas.drawText(effectiveLines[ln], 0, lineY, this.paint, font);
+            }
+          } else {
+            let drawX = x;
+            if (boundsWidth > 0) {
+              const ids = font.getGlyphIDs(text);
+              const widths = font.getGlyphWidths(ids);
+              const actualWidth = widths.reduce((sum: number, w: number) => sum + w, 0);
+              drawX = (boundsWidth - actualWidth) / 2;
+            }
+            canvas.drawText(text, drawX, y, this.paint, font);
           }
-          canvas.drawText(text, drawX, y, this.paint, font);
           font.delete();
+          break;
+        }
+        case OP_DRAW_IMAGE: {
+          const srcLen = readInt32();
+          const srcBytes = new Uint8Array(buffer, offset, srcLen);
+          offset += srcLen;
+          const source = new TextDecoder().decode(srcBytes);
+          const ix = readFloat();
+          const iy = readFloat();
+          const iw = readFloat();
+          const ih = readFloat();
+          const _contentMode = readInt32();
+          const img = this.imageCache.get(source);
+          if (img) {
+            const srcRect = this.ck.XYWHRect(0, 0, img.width(), img.height());
+            const dstRect = this.ck.XYWHRect(ix, iy, iw, ih);
+            canvas.drawImageRect(img, srcRect, dstRect, this.paint);
+          } else {
+            // Draw grey placeholder while image loads
+            this.paint.setColor(this.ck.Color4f(0.85, 0.85, 0.85, 1));
+            this.paint.setStyle(this.ck.PaintStyle.Fill);
+            canvas.drawRect(this.ck.XYWHRect(ix, iy, iw, ih), this.paint);
+            // Trigger async load
+            this.imageCache.load(source);
+          }
           break;
         }
         case OP_RETAINED_BEGIN: {
@@ -125,6 +169,30 @@ export class DisplayListPlayer {
           break;
       }
     }
+  }
+
+  private wrapText(text: string, font: any, maxWidth: number): string[] {
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+
+    for (const word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const ids = font.getGlyphIDs(testLine);
+      const widths = font.getGlyphWidths(ids);
+      const testWidth = widths.reduce((sum: number, w: number) => sum + w, 0);
+
+      if (testWidth > maxWidth && currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+    return lines.length > 0 ? lines : [text];
   }
 
   private setColor(argb: number): void {
