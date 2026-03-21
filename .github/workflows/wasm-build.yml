@@ -28,5 +28,8 @@ jobs:
       - name: Install Swift SDK for WebAssembly
         run: swift sdk install https://download.swift.org/swift-6.2.4-release/wasm-sdk/swift-6.2.4-RELEASE/swift-6.2.4-RELEASE_wasm.artifactbundle.tar.gz --checksum 32fdb8772d73bb174f77b5c59bc88a0d55003d75712832129394d3465158fb43
 
+      - name: Prepare WebHost
+        run: cp -r Examples/BasicApp/WebHost .
+
       - name: Build for WASM
-        run: swift package --swift-sdk swift-6.2.4-RELEASE_wasm js --product SkiaUIDocsSite -c debug
+        run: swift run skia build --product SkiaUIDocsSite --swift-sdk swift-6.2.4-RELEASE_wasm --output dist-wasm
