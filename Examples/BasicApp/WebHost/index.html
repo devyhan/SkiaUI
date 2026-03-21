@@ -46,7 +46,7 @@
       submitDisplayList(bytes) {
         try {
           const buf = bytes.buffer ?? bytes;
-          skCanvas.clear(CanvasKit.Color4f(0.95, 0.95, 0.95, 1.0));
+          skCanvas.clear(CanvasKit.Color4f(1.0, 1.0, 1.0, 1.0));
           play(CanvasKit, buf, skCanvas, typeface);
           surface.flush();
         } catch (err) {
