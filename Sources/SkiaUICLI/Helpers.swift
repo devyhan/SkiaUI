@@ -172,8 +172,8 @@ func findToolchainIdentifier(version: String) -> String? {
     return nil
 }
 
-/// Downloads and installs a Swift toolchain using the macOS installer.
-/// Installs to /Library/Developer/Toolchains/ (requires administrator privileges).
+/// Downloads and installs a Swift toolchain to ~/Library/Developer/Toolchains/.
+/// Extracts the .pkg payload without requiring sudo.
 func installMatchingToolchain(version: String) throws {
     let fm = FileManager.default
     let toolchainName = "swift-\(version)-RELEASE.xctoolchain"
@@ -190,6 +190,8 @@ func installMatchingToolchain(version: String) throws {
     let url = "https://download.swift.org/swift-\(version)-release/xcode/swift-\(version)-RELEASE/swift-\(version)-RELEASE-osx.pkg"
     let tmpDir = NSTemporaryDirectory() + "skiaui-toolchain-\(version)"
     let pkgPath = tmpDir + "/swift.pkg"
+    let expandedPath = tmpDir + "/expanded"
+    let payloadDir = tmpDir + "/payload"
 
     defer {
         try? fm.removeItem(atPath: tmpDir)
@@ -207,11 +209,51 @@ func installMatchingToolchain(version: String) throws {
         "-o", pkgPath, url,
     ])
 
-    print("Installing toolchain (administrator password may be required)...")
-    try shellExec("/usr/bin/sudo", arguments: [
-        "/usr/sbin/installer", "-pkg", pkgPath, "-target", "/",
+    print("Extracting toolchain...")
+
+    // Step 1: Expand pkg structure (decomposes distribution, does NOT extract payloads)
+    try shellExec("/usr/sbin/pkgutil", arguments: [
+        "--expand", pkgPath, expandedPath,
     ])
 
-    print("Installed Swift \(version) toolchain.")
+    // Step 2: Extract payload (contents are the xctoolchain bundle internals)
+    try fm.createDirectory(atPath: payloadDir, withIntermediateDirectories: true)
+
+    try shellExec("/bin/bash", arguments: ["-c", """
+        PAYLOAD="$(find '\(expandedPath)' -name 'Payload' -type f | head -1)"
+        if [ -z "$PAYLOAD" ]; then
+            echo "Error: No Payload found in package"
+            exit 1
+        fi
+        cd '\(payloadDir)'
+        gunzip -dc "$PAYLOAD" 2>/dev/null | cpio -id 2>/dev/null
+        if [ -f Info.plist ]; then exit 0; fi
+        cpio -id < "$PAYLOAD" 2>/dev/null
+        if [ -f Info.plist ]; then exit 0; fi
+        xz -dc "$PAYLOAD" 2>/dev/null | cpio -id 2>/dev/null
+        if [ -f Info.plist ]; then exit 0; fi
+        if command -v aa >/dev/null 2>&1; then
+            aa extract -i "$PAYLOAD" -o . 2>/dev/null
+            if [ -f Info.plist ]; then exit 0; fi
+        fi
+        echo "Error: Could not extract toolchain payload"
+        exit 1
+    """])
+
+    // Step 3: Move extracted contents as .xctoolchain bundle to user directory
+    let toolchainsDir = NSHomeDirectory() + "/Library/Developer/Toolchains"
+    let destination = toolchainsDir + "/" + toolchainName
+    try fm.createDirectory(atPath: toolchainsDir, withIntermediateDirectories: true)
+
+    guard fm.fileExists(atPath: payloadDir + "/Info.plist") else {
+        throw DetectionError.toolchainInstallFailed(version: version)
+    }
+
+    if fm.fileExists(atPath: destination) {
+        try fm.removeItem(atPath: destination)
+    }
+    try fm.moveItem(atPath: payloadDir, toPath: destination)
+
+    print("Installed toolchain: \(destination)")
     print("")
 }
