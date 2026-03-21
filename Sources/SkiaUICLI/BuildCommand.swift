@@ -1,11 +1,12 @@
 import ArgumentParser
 import Foundation
 
-struct BuildCommand: ParsableCommand {
-    static let configuration = CommandConfiguration(
+public struct BuildCommand: ParsableCommand {
+    public static let configuration = CommandConfiguration(
         commandName: "build",
         abstract: "Build the current project for WebAssembly."
     )
+    public init() {}
 
     @Option(name: .long, help: "Executable target name (auto-detected from Package.swift if omitted).")
     var product: String?
@@ -13,10 +14,13 @@ struct BuildCommand: ParsableCommand {
     @Option(name: .long, help: "WASM SDK identifier (auto-detected if omitted).")
     var swiftSdk: String?
 
-    @Option(name: .long, help: "Toolchain identifier to use (auto-detected from SDK if omitted).")
-    var toolchain: String?
+    @Option(name: .shortAndLong, help: "Output directory (default: dist).")
+    var output: String = "dist"
 
-    func run() throws {
+    public func run() throws {
+        let fm = FileManager.default
+        let cwd = fm.currentDirectoryPath
+
         let productName: String
         if let explicit = product {
             productName = explicit
@@ -58,10 +62,13 @@ struct BuildCommand: ParsableCommand {
         }
 
         print("Building \(productName) for WebAssembly...")
+        let scratchPath = cwd + "/.build/skia-wasm"
         try shellExec(
             "/usr/bin/env",
             arguments: [
                 "swift", "package",
+                "--disable-sandbox",
+                "--scratch-path", scratchPath,
                 "--swift-sdk", sdk,
                 "js",
                 "--product", productName,
@@ -70,10 +77,13 @@ struct BuildCommand: ParsableCommand {
             environment: env
         )
 
-        // Create dist/ directory
-        let fm = FileManager.default
-        let cwd = fm.currentDirectoryPath
-        let distDir = cwd + "/dist"
+        // Create output directory
+        let distDir: String
+        if output.hasPrefix("/") {
+            distDir = output
+        } else {
+            distDir = cwd + "/" + output
+        }
 
         if fm.fileExists(atPath: distDir) {
             try fm.removeItem(atPath: distDir)
@@ -81,7 +91,7 @@ struct BuildCommand: ParsableCommand {
         try fm.createDirectory(atPath: distDir, withIntermediateDirectories: true)
 
         // Copy PackageToJS output
-        let packageJSOutput = cwd + "/.build/plugins/PackageToJS/outputs/Package"
+        let packageJSOutput = scratchPath + "/plugins/PackageToJS/outputs/Package"
         if fm.fileExists(atPath: packageJSOutput) {
             try fm.copyItem(atPath: packageJSOutput, toPath: distDir + "/package")
         }
@@ -98,7 +108,6 @@ struct BuildCommand: ParsableCommand {
             }
         }
 
-        print("Build complete! Output in dist/")
-        print("Run 'skiaui serve' to start a local server.")
+        print("Build complete! Output in \(output)/")
     }
 }

@@ -99,7 +99,7 @@ enum Templates {
           submitDisplayList(bytes) {
             try {
               const buf = bytes.buffer ?? bytes;
-              skCanvas.clear(CanvasKit.Color4f(0.95, 0.95, 0.95, 1.0));
+              skCanvas.clear(CanvasKit.Color4f(1.0, 1.0, 1.0, 1.0));
               play(CanvasKit, buf, skCanvas, typeface);
               surface.flush();
             } catch (err) {
@@ -296,14 +296,14 @@ enum Templates {
     fi
 
     # Build the WASM binary
-    swift package --swift-sdk "$SDK" js --product App -c release
+    swift package --disable-sandbox --scratch-path .build/skia-wasm --swift-sdk "$SDK" js --product App -c release
 
     # Create the distribution directory
     rm -rf dist
     mkdir -p dist
 
     # Copy PackageToJS output and web host files
-    cp -r .build/plugins/PackageToJS/outputs/Package dist/package
+    cp -r .build/skia-wasm/plugins/PackageToJS/outputs/Package dist/package
     cp WebHost/index.html dist/
     cp WebHost/displayListPlayer.mjs dist/
 
