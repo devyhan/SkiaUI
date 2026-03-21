@@ -145,36 +145,28 @@ To serve your app, see the [Server Integration](#server-integration) section bel
 
 ## Server Integration
 
-SkiaUI can be seamlessly integrated with [Vapor](https://vapor.codes) to serve your WASM app.
+SkiaUI can be integrated into Swift server environments in two primary ways:
 
-**1. Build for Vapor**
+### 1. Serving WASM Apps (via Vapor)
+The most common approach is using [Vapor](https://vapor.codes) to serve your compiled WASM app as static files.
 
-Run the build tool and specify Vapor's public directory:
+*   **Build**: `swift run skia build -o Public`
+*   **Run**: `swift run App`
+*   **Example**: See [`Examples/Server/Vapor/`](Examples/Server/Vapor/) for a complete setup.
 
-```bash
-swift run skia build --product App --output Public
-```
+### 2. Server-Side Rendering (SSR)
+You can also use SkiaUI directly on the server to generate binary display lists dynamically. These lists can be streamed to any client (iOS, Android, or Web) for pixel-perfect replay.
 
-**2. Run Vapor Server**
-
-Ensure your Vapor app is configured to serve static files from `Public/`, then start the server:
-
-```bash
-swift run App
-```
-
-**3. Vapor Configuration**
-
-In your `configure.swift`:
+*   **Mechanism**: Use `RootHost` to render views to `[UInt8]` binary buffers.
+*   **Example**: See [`Examples/Server/Generic/`](Examples/Server/Generic/) for a framework-agnostic implementation.
 
 ```swift
-import Vapor
+import SkiaUI
 
-public func configure(_ app: Application) throws {
-    // Serve files from the Public/ directory
-    app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
-    
-    // ...
+let host = RootHost()
+host.render(MyView())
+host.setOnDisplayList { bytes in
+    // Send binary 'bytes' to client
 }
 ```
 

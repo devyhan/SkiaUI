@@ -145,36 +145,28 @@ swift run skia build --product App
 
 ## 서버 통합
 
-SkiaUI는 [Vapor](https://vapor.codes)와 완벽하게 통합되어 WASM 앱을 서빙할 수 있습니다.
+SkiaUI는 두 가지 주요 방식으로 Swift 서버 환경에 통합될 수 있습니다.
 
-**1. Vapor용 빌드**
+### 1. WASM 앱 서빙 (Vapor 활용)
+가장 일반적인 방법은 [Vapor](https://vapor.codes)를 사용하여 빌드된 WASM 앱을 정적 파일로 서빙하는 것입니다.
 
-빌드 도구를 실행할 때 Vapor의 `Public/` 디렉토리를 출력 경로로 지정합니다:
+*   **빌드**: `swift run skia build -o Public`
+*   **실행**: `swift run App`
+*   **예제**: 상세 설정은 [`Examples/Server/Vapor/`](../Examples/Server/Vapor/)를 참조하세요.
 
-```bash
-swift run skia build --product App --output Public
-```
+### 2. 서버 사이드 렌더링 (SSR)
+SkiaUI를 서버에서 직접 실행하여 바이너리 디스플레이 리스트를 동적으로 생성할 수도 있습니다. 생성된 리스트는 모든 클라이언트(iOS, Android, Web)로 전송되어 픽셀 단위로 동일하게 재생됩니다.
 
-**2. Vapor 서버 실행**
-
-Vapor 앱이 `Public/` 폴더에서 정적 파일을 서빙하도록 설정되었는지 확인한 후 서버를 실행합니다:
-
-```bash
-swift run App
-```
-
-**3. Vapor 설정**
-
-`configure.swift` 파일에 다음 설정을 추가합니다:
+*   **메커니즘**: `RootHost`를 사용하여 뷰를 `[UInt8]` 바이너리 버퍼로 렌더링합니다.
+*   **예제**: 프레임워크에 비의존적인 구현은 [`Examples/Server/Generic/`](../Examples/Server/Generic/)를 참조하세요.
 
 ```swift
-import Vapor
+import SkiaUI
 
-public func configure(_ app: Application) throws {
-    // Public/ 디렉토리의 파일들을 서빙하도록 설정
-    app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
-    
-    // ...
+let host = RootHost()
+host.render(MyView())
+host.setOnDisplayList { bytes in
+    // 바이너리 'bytes'를 클라이언트로 전송
 }
 ```
 

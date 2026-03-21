@@ -145,38 +145,31 @@ swift run skia build --product App
 
 ## サーバー統合
 
-SkiaUI は [Vapor](https://vapor.codes) とシームレスに統合して、WASM アプリを配信できます。
+SkiaUI は、Swift サーバー環境に主に 2 つの方法で統合できます。
 
-**1. Vapor 用にビルド**
+### 1. WASM アプリの配信 (Vapor の活用)
+最も一般的な方法は、[Vapor](https://vapor.codes) を使用してビルドされた WASM アプリを静的ファイルとして配信することです。
 
-ビルドツールを実行し、Vapor の `Public/` ディレクトリを出力先として指定します：
+*   **ビルド**: `swift run skia build -o Public`
+*   **実行**: `swift run App`
+*   **例**: 詳細な設定は [`Examples/Server/Vapor/`](../Examples/Server/Vapor/) を参照してください。
 
-```bash
-swift run skia build --product App --output Public
-```
+### 2. サーバーサイドレンダリング (SSR)
+SkiaUI をサーバーで直接実行し、バイナリディスプレイリストを動的に生成することもできます。生成されたリストは、すべてのクライアント（iOS、Android、Web）に送信され、ピクセル単位で同一に再生されます。
 
-**2. Vapor サーバーの実行**
-
-Vapor アプリが `Public/` フォルダから静的ファイルを配信するように設定されていることを確認し、サーバーを起動します：
-
-```bash
-swift run App
-```
-
-**3. Vapor の設定**
-
-`configure.swift` で：
+*   **メカニズム**: `RootHost` を使用してビューを `[UInt8]` バイナリバッファとしてレン더링합니다.
+*   **例**: フレームワークに依存しない実装は [`Examples/Server/Generic/`](../Examples/Server/Generic/) を参照してください。
 
 ```swift
-import Vapor
+import SkiaUI
 
-public func configure(_ app: Application) throws {
-    // Public/ ディレクトリからファイルを配信するように設定
-    app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
-    
-    // ...
+let host = RootHost()
+host.render(MyView())
+host.setOnDisplayList { bytes in
+    // バイナリ 'bytes' をクライアントに送信
 }
 ```
+
 
 ## 既知の制約事項
 

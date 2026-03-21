@@ -145,39 +145,30 @@ swift run skia build --product App
 
 ## 服务器集成
 
-SkiaUI 可以与 [Vapor](https://vapor.codes) 无缝集成，用于提供 WASM 应用服务。
+SkiaUI 可以通过两种主要方式集成到 Swift 服务器环境中：
 
-**1. 为 Vapor 构建**
+### 1. 提供 WASM 应用服务 (使用 Vapor)
+最常见的方法是使用 [Vapor](https://vapor.codes) 将构建的 WASM 应用作为静态文件提供服务。
 
-运行构建工具并指定 Vapor 的 `Public/` 目录作为输出路径：
+*   **构建**: `swift run skia build -o Public`
+*   **运行**: `swift run App`
+*   **示例**: 详细配置请参阅 [`Examples/Server/Vapor/`](../Examples/Server/Vapor/)。
 
-```bash
-swift run skia build --product App --output Public
-```
+### 2. 服务器端渲染 (SSR)
+您还可以直接在服务器上运行 SkiaUI，动态生成二进制显示列表。生成的列表可以发送到任何客户端（iOS、Android 或 Web），实现像素级精确的回放。
 
-**2. 运行 Vapor 服务器**
-
-确保您的 Vapor 应用已配置为从 `Public/` 目录提供静态文件，然后启动服务器：
-
-```bash
-swift run App
-```
-
-**3. Vapor 配置**
-
-在您的 `configure.swift` 中：
+*   **机制**: 使用 `RootHost` 将视图渲染为 `[UInt8]` 二进制缓冲区。
+*   **示例**: 有关框架无关的实现，请参阅 [`Examples/Server/Generic/`](../Examples/Server/Generic/)。
 
 ```swift
-import Vapor
+import SkiaUI
 
-public func configure(_ app: Application) throws {
-    // 设置从 Public/ 目录提供静态文件
-    app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
-
-    // ...
+let host = RootHost()
+host.render(MyView())
+host.setOnDisplayList { bytes in
+    // 将二进制 'bytes' 发送到客户端
 }
 ```
-
 
 ## 已知限制
 
