@@ -8,6 +8,8 @@ let package = Package(
     products: [
         .library(name: "SkiaUI", targets: ["SkiaUI"]),
         .library(name: "SkiaUIWebBridge", targets: ["SkiaUIWebBridge"]),
+        .library(name: "SkiaUIBuildTool", targets: ["SkiaUIBuildTool"]),
+        .plugin(name: "SkiaPlugin", targets: ["SkiaPlugin"]),
     ],
     dependencies: [
         .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", exact: "0.47.1"),
@@ -112,7 +114,8 @@ let package = Package(
         // MARK: - Umbrella module (single import for all public APIs)
         .target(
             name: "SkiaUI",
-            dependencies: ["SkiaUIDSL", "SkiaUIState", "SkiaUIRuntime"]
+            dependencies: ["SkiaUIDSL", "SkiaUIState", "SkiaUIRuntime"],
+            path: "Sources/SkiaUI"
         ),
 
         // MARK: - Docs Site (WASM demo app)
@@ -121,13 +124,29 @@ let package = Package(
             dependencies: ["SkiaUI", "SkiaUIWebBridge"]
         ),
 
+        // MARK: - Plugin (SwiftPM command plugin)
+        .plugin(
+            name: "SkiaPlugin",
+            capability: .command(
+                intent: .custom(verb: "skia", description: "Build, export, and scaffold SkiaUI WASM apps"),
+                permissions: [.writeToPackageDirectory(reason: "Write build output to dist/")]
+            ),
+            path: "Plugins/SkiaPlugin"
+        ),
+
         // MARK: - CLI (user-facing WASM workflow tool)
-        .executableTarget(
-            name: "skiaui-cli",
+        .target(
+            name: "SkiaUIBuildTool",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ],
             path: "Sources/SkiaUICLI"
+        ),
+
+        .executableTarget(
+            name: "skia",
+            dependencies: ["SkiaUIBuildTool"],
+            path: "Sources/skia"
         ),
 
         // MARK: - Tests

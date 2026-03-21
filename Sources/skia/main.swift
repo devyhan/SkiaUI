@@ -1,0 +1,3 @@
+import SkiaUIBuildTool
+
+SkiaUICLI.main()

@@ -1,16 +1,17 @@
 import ArgumentParser
 import Foundation
 
-struct CreateCommand: ParsableCommand {
-    static let configuration = CommandConfiguration(
+public struct CreateCommand: ParsableCommand {
+    public static let configuration = CommandConfiguration(
         commandName: "create",
         abstract: "Create a new SkiaUI WASM project."
     )
+    public init() {}
 
     @Argument(help: "Name of the project to create.")
     var name: String
 
-    func run() throws {
+    public func run() throws {
         let fm = FileManager.default
         let projectDir = fm.currentDirectoryPath + "/\(name)"
 
@@ -57,7 +58,6 @@ struct CreateCommand: ParsableCommand {
         print("")
         print("Next steps:")
         print("  cd \(name)")
-        print("  skiaui build")
-        print("  skiaui serve")
+        print("  skia build")
     }
 }

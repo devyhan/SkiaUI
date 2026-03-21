@@ -1,14 +1,12 @@
 import ArgumentParser
-
-@main
-struct SkiaUICLI: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        commandName: "skiaui",
-        abstract: "SkiaUI – Create, build, and serve WASM apps.",
+public struct SkiaUICLI: ParsableCommand {
+    public static let configuration = CommandConfiguration(
+        commandName: "skia",
+        abstract: "SkiaUI – Create and build WASM apps.",
         subcommands: [
             CreateCommand.self,
             BuildCommand.self,
-            ServeCommand.self,
         ]
     )
+    public init() {}
 }
