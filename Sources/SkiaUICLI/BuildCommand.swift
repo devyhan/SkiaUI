@@ -92,9 +92,11 @@ public struct BuildCommand: ParsableCommand {
 
         // Copy PackageToJS output
         let packageJSOutput = scratchPath + "/plugins/PackageToJS/outputs/Package"
-        if fm.fileExists(atPath: packageJSOutput) {
-            try fm.copyItem(atPath: packageJSOutput, toPath: distDir + "/package")
+        guard fm.fileExists(atPath: packageJSOutput) else {
+            print("Error: Build failed — could not find WASM output at \(packageJSOutput)")
+            throw ExitError(code: 1)
         }
+        try fm.copyItem(atPath: packageJSOutput, toPath: distDir + "/package")
 
         // Copy WebHost files
         let webHostDir = cwd + "/WebHost"

@@ -9,6 +9,8 @@ let package = Package(
         .library(name: "SkiaUI", targets: ["SkiaUI"]),
         .library(name: "SkiaUIWebBridge", targets: ["SkiaUIWebBridge"]),
         .library(name: "SkiaUIBuildTool", targets: ["SkiaUIBuildTool"]),
+        .executable(name: "SkiaUIDocsSite", targets: ["SkiaUIDocsSite"]),
+        .executable(name: "skia", targets: ["skia"]),
         .plugin(name: "SkiaPlugin", targets: ["SkiaPlugin"]),
     ],
     dependencies: [
