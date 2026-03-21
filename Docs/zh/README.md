@@ -342,10 +342,14 @@ struct BasicApp: SkiaUI.App {
 **5. 启动服务器并打开**
 
 ```bash
-npx serve dist    # 或: python3 -m http.server -d dist
+# 项目构建 (直接构建到 Vapor Public 目录)
+swift run skia build --product App --output Public
+
+# 启动 Vapor 服务器
+swift run App
 ```
 
-在浏览器中打开 `http://localhost:3000`。
+在浏览器中打开 `http://localhost:8080`。
 
 > 完整示例项目请参阅 [`Examples/BasicApp/`](https://github.com/devyhan/SkiaUI/tree/main/Examples/BasicApp)。
 

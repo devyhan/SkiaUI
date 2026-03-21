@@ -571,10 +571,14 @@ struct BasicApp: SkiaUI.App {
 **5. 서버 실행 후 열기**
 
 ```bash
-npx serve dist    # 또는: python3 -m http.server -d dist
+# 프로젝트 빌드 (Vapor Public 폴더로 직접 빌드)
+swift run skia build --product App --output Public
+
+# Vapor 서버 실행
+swift run App
 ```
 
-브라우저에서 `http://localhost:3000`을 엽니다.
+브라우저에서 `http://localhost:8080`을 엽니다.
 
 > 전체 예제 프로젝트는 [`Examples/BasicApp/`](https://github.com/devyhan/SkiaUI/tree/main/Examples/BasicApp)을 참조하세요.
 

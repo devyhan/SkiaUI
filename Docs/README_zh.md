@@ -121,116 +121,63 @@ swift test
 
 ### 快速开始 (WASM)
 
-通过WebAssembly将SkiaUI应用直接部署到浏览器的5个步骤:
+通过 WebAssembly 将 SkiaUI 应用直接部署到浏览器的 4 个步骤:
 
-**1. 安装Swift WASM SDK**
-
-```bash
-swift sdk install https://download.swift.org/swift-6.2.4-release/wasm-sdk/swift-6.2.4-RELEASE/swift-6.2.4-RELEASE_wasm.artifactbundle.tar.gz
-```
-
-**2. 复制示例项目**
+**1. 复制示例项目**
 
 ```bash
 cp -r Examples/BasicApp ~/MySkiaUIApp
 cd ~/MySkiaUIApp
 ```
 
-**3. 编辑 `Sources/App.swift`**
-
-```swift
-import SkiaUI
-import SkiaUIWebBridge
-
-@main
-struct BasicApp: SkiaUI.App {
-    var body: some View {
-        VStack(spacing: 16) {
-            Text("Hello, SkiaUI!")
-                .fontSize(28)
-                .bold()
-        }
-    }
-
-    static func main() {
-        WebBridge.start(BasicApp.self)
-    }
-}
-```
-
-**4. 构建**
+**2. 构建**
 
 ```bash
-./build.sh
+# 构建项目 (默认为 dist/ 目录)
+swift run skia build --product App
 ```
 
-**5. 启动服务器并打开**
+**3. 启动服务器**
 
-```bash
-npx serve dist    # 或: python3 -m http.server -d dist
-```
-
-在浏览器中打开 `http://localhost:3000`。
+如需运行 Web 服务器，请参阅下方的 [服务器集成](#服务器集成) 部分中的 Vapor 示例。
 
 > 完整示例项目请参阅 [`Examples/BasicApp/`](../Examples/BasicApp/)。
 
 ## 服务器集成
 
-SkiaUI可以在服务器（如Vapor）上运行，并通过HTTP将二进制显示列表流式传输到浏览器客户端。
+SkiaUI 可以与 [Vapor](https://vapor.codes) 无缝集成，用于提供 WASM 应用服务。
 
-**1. 添加依赖**
+**1. 为 Vapor 构建**
 
-```swift
-// Package.swift
-dependencies: [
-    .package(url: "https://github.com/devyhan/SkiaUI.git", branch: "main")
-],
-targets: [
-    .executableTarget(name: "MyApp", dependencies: [
-        .product(name: "SkiaUI", package: "SkiaUI")
-    ])
-]
+运行构建工具并指定 Vapor 的 `Public/` 目录作为输出路径：
+
+```bash
+swift run skia build --product App --output Public
 ```
 
-**2. 渲染View**
+**2. 运行 Vapor 服务器**
 
-```swift
-import SkiaUI
+确保您的 Vapor 应用已配置为从 `Public/` 目录提供静态文件，然后启动服务器：
 
-let host = RootHost()
-host.setViewport(width: 800, height: 600)
-
-var bytes: [UInt8] = []
-host.setOnDisplayList { bytes = $0 }
-host.render(CounterView())
-// `bytes` 现在包含二进制显示列表
+```bash
+swift run App
 ```
 
-**3. 通过HTTP提供**
+**3. Vapor 配置**
+
+在您的 `configure.swift` 中：
 
 ```swift
-// Vapor示例
-app.get("display-list") { req -> Response in
-    var bytes: [UInt8] = []
-    host.setOnDisplayList { bytes = $0 }
-    host.render(MyView())
-    return Response(
-        status: .ok,
-        headers: ["Content-Type": "application/octet-stream"],
-        body: .init(data: Data(bytes))
-    )
+import Vapor
+
+public func configure(_ app: Application) throws {
+    // 设置从 Public/ 目录提供静态文件
+    app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+
+    // ...
 }
 ```
 
-**4. 浏览器客户端**
-
-将`WebClient/`静态文件复制到服务器的public目录，然后fetch并回放：
-
-```js
-const resp = await fetch('/display-list');
-const buffer = await resp.arrayBuffer();
-player.play(buffer, canvas);
-```
 
 ## 已知限制
 

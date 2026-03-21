@@ -121,116 +121,63 @@ swift test
 
 ### Quick Start (WASM)
 
-Deploy a SkiaUI app directly to the browser via WebAssembly in 5 steps:
+Deploy a SkiaUI app directly to the browser via WebAssembly in 4 steps:
 
-**1. Install the Swift WASM SDK**
-
-```bash
-swift sdk install https://download.swift.org/swift-6.2.4-release/wasm-sdk/swift-6.2.4-RELEASE/swift-6.2.4-RELEASE_wasm.artifactbundle.tar.gz
-```
-
-**2. Copy the example project**
+**1. Copy the example project**
 
 ```bash
 cp -r Examples/BasicApp ~/MySkiaUIApp
 cd ~/MySkiaUIApp
 ```
 
-**3. Edit `Sources/App.swift`**
-
-```swift
-import SkiaUI
-import SkiaUIWebBridge
-
-@main
-struct BasicApp: SkiaUI.App {
-    var body: some View {
-        VStack(spacing: 16) {
-            Text("Hello, SkiaUI!")
-                .fontSize(28)
-                .bold()
-        }
-    }
-
-    static func main() {
-        WebBridge.start(BasicApp.self)
-    }
-}
-```
-
-**4. Build**
+**2. Build**
 
 ```bash
-./build.sh
+# Build the project (defaults to dist/ folder)
+swift run skia build --product App
 ```
 
-**5. Serve and open**
+**3. Serve**
 
-```bash
-npx serve dist    # or: python3 -m http.server -d dist
-```
-
-Open `http://localhost:3000` in your browser.
+To serve your app, see the [Server Integration](#server-integration) section below for a complete Vapor example.
 
 > See [`Examples/BasicApp/`](Examples/BasicApp/) for the complete example project.
 
 ## Server Integration
 
-SkiaUI can run on a server (e.g. Vapor) and stream binary display lists to a browser client over HTTP.
+SkiaUI can be seamlessly integrated with [Vapor](https://vapor.codes) to serve your WASM app.
 
-**1. Add Dependency**
+**1. Build for Vapor**
 
-```swift
-// Package.swift
-dependencies: [
-    .package(url: "https://github.com/devyhan/SkiaUI.git", branch: "main")
-],
-targets: [
-    .executableTarget(name: "MyApp", dependencies: [
-        .product(name: "SkiaUI", package: "SkiaUI")
-    ])
-]
+Run the build tool and specify Vapor's public directory:
+
+```bash
+swift run skia build --product App --output Public
 ```
 
-**2. Render a View**
+**2. Run Vapor Server**
 
-```swift
-import SkiaUI
+Ensure your Vapor app is configured to serve static files from `Public/`, then start the server:
 
-let host = RootHost()
-host.setViewport(width: 800, height: 600)
-
-var bytes: [UInt8] = []
-host.setOnDisplayList { bytes = $0 }
-host.render(CounterView())
-// `bytes` now contains the binary display list
+```bash
+swift run App
 ```
 
-**3. Serve via HTTP**
+**3. Vapor Configuration**
+
+In your `configure.swift`:
 
 ```swift
-// Vapor example
-app.get("display-list") { req -> Response in
-    var bytes: [UInt8] = []
-    host.setOnDisplayList { bytes = $0 }
-    host.render(MyView())
-    return Response(
-        status: .ok,
-        headers: ["Content-Type": "application/octet-stream"],
-        body: .init(data: Data(bytes))
-    )
+import Vapor
+
+public func configure(_ app: Application) throws {
+    // Serve files from the Public/ directory
+    app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+    
+    // ...
 }
 ```
 
-**4. Browser Client**
-
-Copy `WebClient/` static files to your server's public directory, then fetch and replay:
-
-```js
-const resp = await fetch('/display-list');
-const buffer = await resp.arrayBuffer();
-player.play(buffer, canvas);
-```
 
 ## Known Limitations
 

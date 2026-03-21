@@ -91,7 +91,7 @@ graph TD
 | **レンダリング** | List | 予定 |
 | **レンダリング** | アニメーションシステム | 予定 |
 | **レンダリング** | 画像サポート | 予定 |
-| **プラットフォーム** | ネイティブSkiaバックエンド (Metal / Vulkan) | 予定 |
+| **プラットフォーム** | ネ이티브 Skiaバックエンド (Metal / Vulkan) | 予定 |
 
 ## プロダクト
 
@@ -112,7 +112,7 @@ graph TD
 ### ビルドとテスト
 
 ```bash
-# 全モジュールビルド
+# 全モジュールビル드
 swift build
 
 # テスト実行
@@ -121,115 +121,61 @@ swift test
 
 ### クイックスタート (WASM)
 
-WebAssemblyでSkiaUIアプリをブラウザに直接デプロイする5ステップ:
+WebAssemblyでSkiaUIアプリをブラウザに直接デプロイする4ステップ:
 
-**1. Swift WASM SDKをインストール**
-
-```bash
-swift sdk install https://download.swift.org/swift-6.2.4-release/wasm-sdk/swift-6.2.4-RELEASE/swift-6.2.4-RELEASE_wasm.artifactbundle.tar.gz
-```
-
-**2. サンプルプロジェクトをコピー**
+**1. サンプルプロジェクトをコピー**
 
 ```bash
 cp -r Examples/BasicApp ~/MySkiaUIApp
 cd ~/MySkiaUIApp
 ```
 
-**3. `Sources/App.swift`を編集**
-
-```swift
-import SkiaUI
-import SkiaUIWebBridge
-
-@main
-struct BasicApp: SkiaUI.App {
-    var body: some View {
-        VStack(spacing: 16) {
-            Text("Hello, SkiaUI!")
-                .fontSize(28)
-                .bold()
-        }
-    }
-
-    static func main() {
-        WebBridge.start(BasicApp.self)
-    }
-}
-```
-
-**4. ビルド**
+**2. ビルド**
 
 ```bash
-./build.sh
+# プロジェクトをビルド (デフォルトは dist/ フォルダ)
+swift run skia build --product App
 ```
 
-**5. サーバーを起動して開く**
+**3. サーバー起動**
 
-```bash
-npx serve dist    # または: python3 -m http.server -d dist
-```
-
-ブラウザで `http://localhost:3000` を開きます。
+アプリを Web サーバーで実行するには、以下の [サーバー統合](#サーバー統合) セクションの Vapor 例を参照してください。
 
 > 完全なサンプルプロジェクトは [`Examples/BasicApp/`](../Examples/BasicApp/) を参照してください。
 
 ## サーバー統合
 
-SkiaUIはサーバー（例：Vapor）で実行し、バイナリディスプレイリストをHTTPでブラウザクライアントにストリーミングできます。
+SkiaUI は [Vapor](https://vapor.codes) とシームレスに統合して、WASM アプリを配信できます。
 
-**1. 依存関係の追加**
+**1. Vapor 用にビルド**
 
-```swift
-// Package.swift
-dependencies: [
-    .package(url: "https://github.com/devyhan/SkiaUI.git", branch: "main")
-],
-targets: [
-    .executableTarget(name: "MyApp", dependencies: [
-        .product(name: "SkiaUI", package: "SkiaUI")
-    ])
-]
+ビルドツールを実行し、Vapor の `Public/` ディレクトリを出力先として指定します：
+
+```bash
+swift run skia build --product App --output Public
 ```
 
-**2. Viewのレンダリング**
+**2. Vapor サーバーの実行**
 
-```swift
-import SkiaUI
+Vapor アプリが `Public/` フォルダから静的ファイルを配信するように設定されていることを確認し、サーバーを起動します：
 
-let host = RootHost()
-host.setViewport(width: 800, height: 600)
-
-var bytes: [UInt8] = []
-host.setOnDisplayList { bytes = $0 }
-host.render(CounterView())
-// `bytes`にバイナリディスプレイリストが格納される
+```bash
+swift run App
 ```
 
-**3. HTTP配信**
+**3. Vapor の設定**
+
+`configure.swift` で：
 
 ```swift
-// Vaporの例
-app.get("display-list") { req -> Response in
-    var bytes: [UInt8] = []
-    host.setOnDisplayList { bytes = $0 }
-    host.render(MyView())
-    return Response(
-        status: .ok,
-        headers: ["Content-Type": "application/octet-stream"],
-        body: .init(data: Data(bytes))
-    )
+import Vapor
+
+public func configure(_ app: Application) throws {
+    // Public/ ディレクトリからファイルを配信するように設定
+    app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+    
+    // ...
 }
-```
-
-**4. ブラウザクライアント**
-
-`WebClient/`の静的ファイルをサーバーのpublicディレクトリにコピーし、fetchして再生します：
-
-```js
-const resp = await fetch('/display-list');
-const buffer = await resp.arrayBuffer();
-player.play(buffer, canvas);
 ```
 
 ## 既知の制約事項

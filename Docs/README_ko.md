@@ -119,118 +119,65 @@ swift build
 swift test
 ```
 
-### 빠른 시작 (WASM)
+### 퀵 스타트 (WASM)
 
-WebAssembly로 SkiaUI 앱을 브라우저에 직접 배포하는 5단계:
+WebAssembly를 통해 SkiaUI 앱을 브라우저에 배포하는 4단계:
 
-**1. Swift WASM SDK 설치**
-
-```bash
-swift sdk install https://download.swift.org/swift-6.2.4-release/wasm-sdk/swift-6.2.4-RELEASE/swift-6.2.4-RELEASE_wasm.artifactbundle.tar.gz
-```
-
-**2. 예제 프로젝트 복사**
+**1. 예제 프로젝트 복사**
 
 ```bash
 cp -r Examples/BasicApp ~/MySkiaUIApp
 cd ~/MySkiaUIApp
 ```
 
-**3. `Sources/App.swift` 수정**
-
-```swift
-import SkiaUI
-import SkiaUIWebBridge
-
-@main
-struct BasicApp: SkiaUI.App {
-    var body: some View {
-        VStack(spacing: 16) {
-            Text("Hello, SkiaUI!")
-                .fontSize(28)
-                .bold()
-        }
-    }
-
-    static func main() {
-        WebBridge.start(BasicApp.self)
-    }
-}
-```
-
-**4. 빌드**
+**2. 빌드**
 
 ```bash
-./build.sh
+# 프로젝트 빌드 (기본 dist/ 폴더)
+swift run skia build --product App
 ```
 
-**5. 서버 실행 후 열기**
+**3. 서버 실행**
 
-```bash
-npx serve dist    # 또는: python3 -m http.server -d dist
-```
-
-브라우저에서 `http://localhost:3000`을 엽니다.
+앱을 웹 서버로 실행하려면 아래의 [서버 통합](#서버-통합) 섹션에서 Vapor 예제를 참조하세요.
 
 > 전체 예제 프로젝트는 [`Examples/BasicApp/`](../Examples/BasicApp/)을 참조하세요.
 
 ## 서버 통합
 
-SkiaUI는 서버(예: Vapor)에서 실행하고 바이너리 디스플레이 리스트를 HTTP로 브라우저 클라이언트에 전송할 수 있습니다.
+SkiaUI는 [Vapor](https://vapor.codes)와 완벽하게 통합되어 WASM 앱을 서빙할 수 있습니다.
 
-**1. 의존성 추가**
+**1. Vapor용 빌드**
 
-```swift
-// Package.swift
-dependencies: [
-    .package(url: "https://github.com/devyhan/SkiaUI.git", branch: "main")
-],
-targets: [
-    .executableTarget(name: "MyApp", dependencies: [
-        .product(name: "SkiaUI", package: "SkiaUI")
-    ])
-]
+빌드 도구를 실행할 때 Vapor의 `Public/` 디렉토리를 출력 경로로 지정합니다:
+
+```bash
+swift run skia build --product App --output Public
 ```
 
-**2. View 렌더링**
+**2. Vapor 서버 실행**
 
-```swift
-import SkiaUI
+Vapor 앱이 `Public/` 폴더에서 정적 파일을 서빙하도록 설정되었는지 확인한 후 서버를 실행합니다:
 
-let host = RootHost()
-host.setViewport(width: 800, height: 600)
-
-var bytes: [UInt8] = []
-host.setOnDisplayList { bytes = $0 }
-host.render(CounterView())
-// `bytes`에 바이너리 디스플레이 리스트가 저장됨
+```bash
+swift run App
 ```
 
-**3. HTTP로 제공**
+**3. Vapor 설정**
+
+`configure.swift` 파일에 다음 설정을 추가합니다:
 
 ```swift
-// Vapor 예시
-app.get("display-list") { req -> Response in
-    var bytes: [UInt8] = []
-    host.setOnDisplayList { bytes = $0 }
-    host.render(MyView())
-    return Response(
-        status: .ok,
-        headers: ["Content-Type": "application/octet-stream"],
-        body: .init(data: Data(bytes))
-    )
+import Vapor
+
+public func configure(_ app: Application) throws {
+    // Public/ 디렉토리의 파일들을 서빙하도록 설정
+    app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+    
+    // ...
 }
 ```
 
-**4. 브라우저 클라이언트**
-
-`WebClient/` 정적 파일을 서버의 public 디렉토리에 복사한 후 fetch하여 재생합니다:
-
-```js
-const resp = await fetch('/display-list');
-const buffer = await resp.arrayBuffer();
-player.play(buffer, canvas);
-```
 
 ## 알려진 제약사항
 

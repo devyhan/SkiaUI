@@ -44,14 +44,17 @@ swift sdk install https://download.swift.org/swift-6.2.4-release/wasm-sdk/swift-
    }
    ```
 
-3. **Build and run:**
+3. **Build and run (with Vapor):**
 
    ```bash
-   ./build.sh
-   npx serve dist
+   # Build directly into Vapor's public directory
+   swift run skia build --output Public
+   
+   # Start the Vapor server
+   swift run App
    ```
 
-4. Open `http://localhost:3000` in your browser.
+4. Open `http://localhost:8080` (or your Vapor port) in your browser.
 
 ## Project Structure
 
@@ -63,14 +66,12 @@ BasicApp/
 ├── WebHost/
 │   ├── index.html             # Browser entry point (CanvasKit loader)
 │   └── displayListPlayer.mjs  # DisplayList binary decoder + renderer
-├── build.sh                   # One-command WASM build script
-└── README.md
+└── README.md                  # This file
 ```
 
 ## How It Works
 
-1. `swift package js` compiles Swift to WASM and generates JS glue code
-2. `build.sh` copies the WASM output + web host files into `dist/`
-3. `index.html` loads CanvasKit, initializes the canvas, and starts the WASM app
-4. Swift renders UI via the SkiaUI pipeline and sends binary display list commands to `displayListPlayer.mjs`
-5. The player decodes the binary commands and draws them using CanvasKit
+1. `swift run skia build` compiles Swift to WASM, generates JS glue code, and bundles everything into `dist/`
+2. `index.html` loads CanvasKit, initializes the canvas, and starts the WASM app
+3. Swift renders UI via the SkiaUI pipeline and sends binary display list commands to `displayListPlayer.mjs`
+4. The player decodes the binary commands and draws them using CanvasKit
