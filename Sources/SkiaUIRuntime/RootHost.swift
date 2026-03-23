@@ -14,7 +14,7 @@ public final class RootHost: @unchecked Sendable {
     private let context: RenderContext
     private var currentElement: Element?
     private var currentLayout: LayoutNode?
-    private let layoutEngine = LayoutEngine()
+    private let layoutEngine: LayoutEngine
     private let reconciler = Reconciler()
     private var previousElement: Element?
     private var previousDisplayListBytes: [UInt8]?
@@ -29,8 +29,17 @@ public final class RootHost: @unchecked Sendable {
     private var onDisplayList: (([UInt8]) -> Void)?
     private let attributeGraph = AttributeGraph()
 
-    public init(context: RenderContext = .default) {
+    public init(context: RenderContext = .default, textMeasurer: (any TextMeasurer)? = nil) {
         self.context = context
+        
+        let measurer: any TextMeasurer = textMeasurer ?? {
+            #if canImport(CoreText)
+            return CoreTextMeasurer()
+            #else
+            return EstimatedTextMeasurer()
+            #endif
+        }()
+        self.layoutEngine = LayoutEngine(textMeasurer: measurer)
     }
 
     public func setViewport(width: Float, height: Float) {

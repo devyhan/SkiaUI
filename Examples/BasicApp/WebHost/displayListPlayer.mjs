@@ -11,7 +11,7 @@ const OP_DRAW_TEXT = 7;
 const OP_RETAINED_BEGIN = 8;
 const OP_RETAINED_END = 9;
 
-export function play(ck, buffer, canvas, typeface) {
+export function play(ck, buffer, canvas, ...typefaces) {
   const view = new DataView(buffer);
   let offset = 0;
 
@@ -89,28 +89,55 @@ export function play(ck, buffer, canvas, typeface) {
         const x = readFloat();
         const y = readFloat();
         const fontSize = readFloat();
-        readInt32(); // fontWeight (unused)
+        const fontWeight = readInt32(); // fontWeight
         const color = readUint32();
         const boundsWidth = readFloat();
         // fontFamily (4-byte length + UTF-8 bytes, length 0 = nil)
         const familyLen = readInt32();
+        let fontFamily = null;
         if (familyLen > 0) {
+          const familyBytes = new Uint8Array(buffer, offset, familyLen);
           offset += familyLen;
+          fontFamily = new TextDecoder().decode(familyBytes);
         }
-        readInt32(); // lineLimit
+        const lineLimit = readInt32();
         readInt32(); // lineBreakMode
-        setColor(color);
+        
+        // Font fallback management:
+        const fontProvider = ck.TypefaceFontProvider.Make();
+        for (const tf of typefaces) {
+          fontProvider.registerTypeface(tf, ""); // Registering with empty string allows them to be used as fallbacks
+        }
+        
+        const style = new ck.ParagraphStyle({
+          textStyle: {
+            color: ck.Color4f(
+              ((color >> 16) & 0xFF) / 255,
+              ((color >> 8) & 0xFF) / 255,
+              (color & 0xFF) / 255,
+              ((color >>> 24) & 0xFF) / 255
+            ),
+            fontSize: fontSize,
+            fontFamilies: fontFamily ? [fontFamily, 'sans-serif'] : ['sans-serif'],
+          },
+          maxLines: lineLimit > 0 ? lineLimit : undefined,
+          ellipsis: lineLimit > 0 ? '...' : undefined,
+        });
 
-        const font = new ck.Font(typeface, fontSize);
+        const builder = ck.ParagraphBuilder.MakeFromFontProvider(style, fontProvider);
+        builder.addText(text);
+        const paragraph = builder.build();
+        paragraph.layout(boundsWidth > 0 ? boundsWidth : 100000);
+
         let drawX = x;
         if (boundsWidth > 0) {
-          const ids = font.getGlyphIDs(text);
-          const widths = font.getGlyphWidths(ids);
-          const actualWidth = widths.reduce((sum, w) => sum + w, 0);
-          drawX = (boundsWidth - actualWidth) / 2;
+          drawX = (boundsWidth - paragraph.getMaxIntrinsicWidth()) / 2;
         }
-        canvas.drawText(text, drawX, y, paint, font);
-        font.delete();
+        canvas.drawParagraph(paragraph, drawX, y);
+        
+        paragraph.delete();
+        builder.delete();
+        fontProvider.delete();
         break;
       }
       case OP_RETAINED_BEGIN:

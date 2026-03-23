@@ -3,6 +3,7 @@ import type { CanvasKit, Typeface } from 'canvaskit-wasm';
 export class FontManager {
   private ck: CanvasKit;
   private typefaces: Map<string, Typeface> = new Map();
+  private fontData: ArrayBuffer[] = [];
   private defaultTypeface: Typeface | null = null;
 
   constructor(ck: CanvasKit) {
@@ -10,22 +11,24 @@ export class FontManager {
   }
 
   async loadFont(url: string, familyName: string): Promise<void> {
-    const fontData = await fetch(url).then((r) => r.arrayBuffer());
+    const data = await fetch(url).then((r) => r.arrayBuffer());
+    this.fontData.push(data);
+    
     let typeface: Typeface | null = null;
     try {
-      typeface = this.ck.Typeface.MakeFreeTypeFaceFromData(fontData);
+      typeface = this.ck.Typeface.MakeFreeTypeFaceFromData(data);
     } catch {}
-    if (!typeface) {
-      try {
-        typeface = this.ck.FontMgr.RefDefault().MakeTypefaceFromData(fontData);
-      } catch {}
-    }
+    
     if (typeface) {
       this.typefaces.set(familyName, typeface);
       if (!this.defaultTypeface) {
         this.defaultTypeface = typeface;
       }
     }
+  }
+
+  getFontMgr() {
+    return this.ck.FontMgr.FromData(...this.fontData);
   }
 
   getTypeface(familyName: string | null): Typeface | null {

@@ -35,19 +35,68 @@
     const surface = CanvasKit.MakeWebGLCanvasSurface(canvas);
     const skCanvas = surface.getCanvas();
 
-    // Load default font for text rendering
-    const fontResp = await fetch("https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5Q.ttf");
-    const fontData = await fontResp.arrayBuffer();
-    const typeface = CanvasKit.Typeface.MakeFreeTypeFaceFromData(fontData);
+    // Use a secondary canvas for measurement to avoid flushing the main surface
+    const offscreenCanvas = document.createElement("canvas");
+    const ctx = offscreenCanvas.getContext("2d");
+
+    // Load multiple fonts for fallback support (English and Korean)
+    const [robotoResp, notoResp] = await Promise.all([
+      fetch("https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5Q.ttf"),
+      fetch("https://fonts.gstatic.com/s/notosanskr/v36/PBy7FmXiEBPT4ITM6vY_mS_v.ttf")
+    ]);
+    const [robotoData, notoData] = await Promise.all([
+      robotoResp.arrayBuffer(),
+      notoResp.arrayBuffer()
+    ]);
+    
+    const typeface = CanvasKit.Typeface.MakeFreeTypeFaceFromData(robotoData);
+    const notoTypeface = CanvasKit.Typeface.MakeFreeTypeFaceFromData(notoData);
 
     // Set up the bridge that Swift's WebBridge.start() expects
     window.skiaUI = {
       viewport: { width: canvas.width, height: canvas.height },
+      measureText(text, fontSize, fontWeight, fontFamily, maxWidth) {
+        // Map common family names to the custom font if they aren't available in browser
+        const fontStr = `${fontWeight} ${fontSize}px ${fontFamily ? fontFamily + ',' : ''} "Noto Sans KR", sans-serif`;
+        ctx.font = fontStr;
+        
+        if (maxWidth > 0) {
+          // Multiline measurement
+          const words = text.split(" ");
+          let lines = 0;
+          let currentLine = "";
+          let maxMeasuredWidth = 0;
+          
+          for (let n = 0; n < words.length; n++) {
+            const testLine = currentLine + words[n] + " ";
+            const metrics = ctx.measureText(testLine);
+            const testWidth = metrics.width;
+            if (testWidth > maxWidth && n > 0) {
+              lines++;
+              currentLine = words[n] + " ";
+            } else {
+              currentLine = testLine;
+              maxMeasuredWidth = Math.max(maxMeasuredWidth, testWidth);
+            }
+          }
+          lines++;
+          return {
+            width: maxMeasuredWidth,
+            height: lines * (fontSize * 1.2)
+          };
+        } else {
+          const metrics = ctx.measureText(text);
+          return {
+            width: metrics.width,
+            height: fontSize * 1.2
+          };
+        }
+      },
       submitDisplayList(bytes) {
         try {
           const buf = bytes.buffer ?? bytes;
           skCanvas.clear(CanvasKit.Color4f(1.0, 1.0, 1.0, 1.0));
-          play(CanvasKit, buf, skCanvas, typeface);
+          play(CanvasKit, buf, skCanvas, typeface, notoTypeface);
           surface.flush();
         } catch (err) {
           console.error("[SkiaUI] submitDisplayList error:", err);

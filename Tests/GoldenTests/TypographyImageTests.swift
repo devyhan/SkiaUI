@@ -42,5 +42,24 @@ extension AllGoldenTests {
             named: "multipleTextsInVStack"
         )
     }
+
+    @Test func multilingualText() {
+        assertImageSnapshot(
+            VStack(spacing: 8) {
+                Text("Hello World (English)")
+                Text("안녕하세요 (Korean)")
+                Text("こんにちは (Japanese)")
+                Text("你好 (Chinese)")
+                Text("नमस्ते (Hindi)")
+                Text("สวัสดี (Thai)")
+                Text("مرحبا (Arabic - RTL)")
+                Text("Emojis: 🚀 🌍 🌈 🍎")
+                Text("Mixed: 한글, 中文, 日本語, 123").fontSize(14)
+            },
+            named: "multilingualText",
+            width: 400,
+            height: 350
+        )
+    }
 }
 }

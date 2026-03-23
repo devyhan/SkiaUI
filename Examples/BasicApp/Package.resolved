@@ -1,0 +1,33 @@
+{
+  "originHash" : "25d9f65562772cc281d8ed82e0a6a21cd9c8846cb1e15488e7a6ff396555e9d7",
+  "pins" : [
+    {
+      "identity" : "javascriptkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftwasm/JavaScriptKit.git",
+      "state" : {
+        "revision" : "1f54ba6b17f4d0f378f671210f7121a29996159e",
+        "version" : "0.47.1"
+      }
+    },
+    {
+      "identity" : "skiaui",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/devyhan/SkiaUI.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "a6dc97fc7a05c4ce6bf4ed85ac167b6e5b9fe747"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-syntax",
+      "state" : {
+        "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
+        "version" : "602.0.0"
+      }
+    }
+  ],
+  "version" : 3
+}

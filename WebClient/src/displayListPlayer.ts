@@ -110,29 +110,36 @@ export class DisplayListPlayer {
           const _lineBreakMode = readInt32();
           this.setColor(color);
 
-          const typeface = this.fontManager.getTypeface(fontFamily);
-          const font = new this.ck.Font(typeface, fontSize);
+          const fontMgr = this.fontManager.getFontMgr();
+          const style = new this.ck.ParagraphStyle({
+            textStyle: {
+              color: this.ck.Color4f(
+                ((color >> 16) & 0xFF) / 255,
+                ((color >> 8) & 0xFF) / 255,
+                (color & 0xFF) / 255,
+                ((color >>> 24) & 0xFF) / 255
+              ),
+              fontSize: fontSize,
+              fontFamilies: fontFamily ? [fontFamily, 'sans-serif'] : ['sans-serif'],
+            },
+            maxLines: lineLimit > 0 ? lineLimit : undefined,
+            ellipsis: '...',
+          });
 
-          if (lineLimit > 1 && boundsWidth > 0) {
-            // Multiline text rendering using manual line wrapping
-            const lineHeight = fontSize * 1.2;
-            const lines = this.wrapText(text, font, boundsWidth);
-            const effectiveLines = lines.slice(0, lineLimit > 0 ? lineLimit : lines.length);
-            for (let ln = 0; ln < effectiveLines.length; ln++) {
-              const lineY = y + ln * lineHeight;
-              canvas.drawText(effectiveLines[ln], 0, lineY, this.paint, font);
-            }
-          } else {
-            let drawX = x;
-            if (boundsWidth > 0) {
-              const ids = font.getGlyphIDs(text);
-              const widths = font.getGlyphWidths(ids);
-              const actualWidth = widths.reduce((sum: number, w: number) => sum + w, 0);
-              drawX = (boundsWidth - actualWidth) / 2;
-            }
-            canvas.drawText(text, drawX, y, this.paint, font);
+          const builder = this.ck.ParagraphBuilder.Make(style, fontMgr);
+          builder.addText(text);
+          const paragraph = builder.build();
+          paragraph.layout(boundsWidth > 0 ? boundsWidth : 10000);
+
+          let drawX = x;
+          if (boundsWidth > 0) {
+            drawX = (boundsWidth - paragraph.getMaxIntrinsicWidth()) / 2;
           }
-          font.delete();
+          canvas.drawParagraph(paragraph, drawX, y);
+          
+          paragraph.delete();
+          builder.delete();
+          fontMgr.delete();
           break;
         }
         case OP_DRAW_IMAGE: {

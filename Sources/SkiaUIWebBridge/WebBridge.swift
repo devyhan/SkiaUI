@@ -12,7 +12,7 @@ public struct WebBridge {
     public static func start<A: App>(_ appType: A.Type) {
         let context = RenderContext()
         nonisolated(unsafe) let app = A()
-        let host = RootHost(context: context)
+        let host = RootHost(context: context, textMeasurer: WebTextMeasurer())
 
         let skiaUI = JSObject.global.skiaUI.object!
 
