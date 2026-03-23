@@ -49,12 +49,21 @@ public final class RenderContext: @unchecked Sendable {
 
     /// Returns the currently active render context, or the default if none is set.
     public static var active: RenderContext {
+        #if arch(wasm32)
+        _activeRenderContext ?? .default
+        #else
         Thread.current.threadDictionary[_activeRenderContextKey] as? RenderContext ?? .default
+        #endif
     }
 
     /// Activate this context for the duration of the given closure.
     /// Properly restores the previous context on exit.
     public func activate<T>(body: () throws -> T) rethrows -> T {
+        #if arch(wasm32)
+        let previous = _activeRenderContext
+        _activeRenderContext = self
+        defer { _activeRenderContext = previous }
+        #else
         let threadDictionary = Thread.current.threadDictionary
         let previous = threadDictionary[_activeRenderContextKey]
         threadDictionary[_activeRenderContextKey] = self
@@ -65,6 +74,7 @@ public final class RenderContext: @unchecked Sendable {
                 threadDictionary.removeObject(forKey: _activeRenderContextKey)
             }
         }
+        #endif
         return try body()
     }
 
@@ -198,3 +208,4 @@ public struct DragHandler: Sendable {
 }
 
 private let _activeRenderContextKey = "SkiaUI.RenderContext.active"
+nonisolated(unsafe) var _activeRenderContext: RenderContext?
