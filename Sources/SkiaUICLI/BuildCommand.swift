@@ -14,6 +14,9 @@ public struct BuildCommand: ParsableCommand {
     @Option(name: .long, help: "WASM SDK identifier (auto-detected if omitted).")
     var swiftSdk: String?
 
+    @Option(name: .long, help: "Toolchain identifier to use (auto-detected from SDK if omitted).")
+    var toolchain: String?
+
     @Option(name: .shortAndLong, help: "Output directory (default: dist).")
     var output: String = "dist"
 
